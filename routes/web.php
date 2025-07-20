@@ -3,6 +3,7 @@
 use App\Http\Controllers\Business_tpyeController;
 use App\Http\Controllers\CategoryAndSubCategoryController;
 use App\Http\Controllers\CityAndAreaController;
+use App\Http\Controllers\CreateBillController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DistributorController;
 use App\Http\Controllers\HomeController;
@@ -47,7 +48,17 @@ Route::get('/Area', [CityAndAreaController::class, 'Area'])->name('Area');
 Route::post('/store-Area', [CityAndAreaController::class, 'store_Area'])->name('store-Area');
 Route::post('/Area/update', [CityAndAreaController::class, 'update_area'])->name('Area.update');
 
+Route::get('/create-bill', [CreateBillController::class, 'create_bill'])->name('create-bill');
+Route::post('/create-bill/store', [CreateBillController::class, 'store_bill'])->name('create.bill.store');
+Route::get('/customer-ledger-info/{id}', [CreateBillController::class, 'getCustomerLedger'])->name('customer.ledger.info');
+Route::get('/bills', [CreateBillController::class, 'bills'])->name('bills');
+Route::post('/delete-bill', [CreateBillController::class, 'deleteBill'])->name('delete-bill');
+Route::post('/update-bill', [CreateBillController::class, 'updateBill'])->name('update-bill');
 
+Route::get('/bill-asign', [CreateBillController::class, 'bill_asign'])->name('bill-asign');
+Route::post('/fetch-users-by-role', [CreateBillController::class, 'fetchUsersByRole'])->name('fetch-users-by-role');
+Route::post('/fetch-unassigned-bills', [CreateBillController::class, 'fetchUnassignedBills'])->name('fetch-unassigned-bills');
+Route::post('/assign-bills', [CreateBillController::class, 'assignBills'])->name('assign.bills');
 
 Route::get('/Distributor', [DistributorController::class, 'Distributor'])->name('Distributor');
 Route::post('/store-Distributor', [DistributorController::class, 'store_Distributor'])->name('store-Distributor');

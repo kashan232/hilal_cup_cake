@@ -48,7 +48,21 @@
                                         <td>{{ $salesman->name }}</td>
                                         <td>{{ $salesman->phone }}</td>
                                         <td>{{ $salesman->city }}</td>
-                                        <td>{{ $salesman->area }}</td>
+                                        <td>
+                                            @php
+                                            $areas = json_decode($salesman->area, true);
+                                            @endphp
+
+                                            @if(is_array($areas) && count($areas))
+                                            @foreach($areas as $area)
+                                            <span class="badge bg-primary">{{ $area }}</span>
+                                            @endforeach
+                                            @else
+                                            <span class="text-muted">N/A</span>
+                                            @endif
+                                        </td>
+
+
                                         <td>{{ $salesman->address }}</td>
                                         <td>{{ number_format($salesman->salary, 2) }}</td>
                                         <td>
@@ -122,14 +136,14 @@
                             </div>
 
                             <!-- Area -->
+                            <!-- Area as Checkboxes -->
                             <div class="col-md-6 mb-3">
-                                <label for="areasSelect" class="form-label">Area</label>
-
-                                <select class="form-control" name="area" id="areasSelect" required>
-                                    <option value="">Select Areas</option>
-                                </select>
-
+                                <label class="form-label">Areas</label>
+                                <div id="areaCheckboxes" class="form-control" style="height:auto; max-height: 150px; overflow-y:auto;">
+                                    <small class="text-muted">Please select a city first</small>
+                                </div>
                             </div>
+
                         </div>
 
                         <div class="row">
@@ -151,8 +165,9 @@
                             <div class="col-md-6 mb-3">
                                 <label for="designationSelect" class="form-label">Designation</label>
                                 <select class="form-control" name="designation" id="designationSelect" required>
-                                    <option value="Order Booker">Order Booker</option>
-                                    <option value="Saleman">Saleman</option>
+                                    <option value="orderbooker">Order Booker</option>
+                                    <option value="saleman">Saleman</option>
+                                    <option value="accountant">Accountant</option>
                                 </select>
                             </div>
 
@@ -165,6 +180,20 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="row">
+                            <!-- Designation -->
+                            <div class="col-md-6 mb-3">
+                                <label for="designationSelect" class="form-label">Email</label>
+                                <input type="text" name="email" class="form-control" placeholder="Email Here">
+                            </div>
+
+                            <!-- Status -->
+                            <div class="col-md-6 mb-3">
+                                <label for="status" class="form-label">Password</label>
+                                <input type="password" name="password" class="form-control" placeholder="Password Here">
+                            </div>
+                        </div>
+
                     </div>
 
                     <div class="modal-footer">
@@ -197,10 +226,13 @@
                         <label>Phone</label>
                         <input type="text" class="form-control" id="edit_phone" name="phone" required>
 
-
+                        <label>City</label>
+                        <input type="text" class="form-control" id="edit_city" name="city" readonly>
 
                         <label>Area</label>
-                        <select class="form-control" id="edit_area" name="area" required></select>
+                        <div id="editAreaCheckboxes" class="form-group">
+                            <small class="text-muted">Please select area(s)</small>
+                        </div>
 
                         <label>Address</label>
                         <input type="text" class="form-control" id="edit_address" name="address" required>
@@ -211,8 +243,9 @@
 
                         <label>Designation</label>
                         <select class="form-control" name="designation" id="edit_designation" required>
-                            <option value="Order Booker">Order Booker</option>
-                            <option value="Saleman">Saleman</option>
+                            <option value="orderbooker">Order Booker</option>
+                            <option value="saleman">Saleman</option>
+                            <option value="accountant">Accountant</option>
                         </select>
 
 
@@ -237,7 +270,7 @@
             // Add Product Modal: Fetch areas on Category Change
             $('#citySelect').change(function() {
                 var cityId = $(this).val();
-                $('#areasSelect').html('<option value="">Loading...</option>');
+                $('#areaCheckboxes').html('<small class="text-muted">Loading areas...</small>');
 
                 if (cityId) {
                     $.ajax({
@@ -247,17 +280,26 @@
                             city_id: cityId
                         },
                         success: function(data) {
-                            $('#areasSelect').html('<option value="">Select Area</option>');
-                            $.each(data, function(key, area) {
-                                $('#areasSelect').append('<option value="' + area.area_name + '">' + area.area_name + '</option>');
-                            });
+                            $('#areaCheckboxes').html('');
+                            if (data.length > 0) {
+                                $.each(data, function(key, area) {
+                                    $('#areaCheckboxes').append(`
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="areas[]" value="${area.area_name}" id="area_${area.id}">
+                                <label class="form-check-label" for="area_${area.area_name}">${area.area_name}</label>
+                            </div>
+                        `);
+                                });
+                            } else {
+                                $('#areaCheckboxes').html('<small class="text-danger">No areas found for selected city.</small>');
+                            }
                         },
                         error: function() {
-                            alert('Error fetching areas.');
+                            $('#areaCheckboxes').html('<small class="text-danger">Error fetching areas.</small>');
                         }
                     });
                 } else {
-                    $('#areasSelect').html('<option value=""> Area Not Found...</option>');
+                    $('#areaCheckboxes').html('<small class="text-muted">Please select a city first</small>');
                 }
             });
         });
@@ -266,34 +308,52 @@
             $("#edit_salesman_id").val($(this).data("id"));
             $("#edit_name").val($(this).data("name"));
             $("#edit_phone").val($(this).data("phone"));
-            $("#edit_city").val($(this).data("city")).trigger("change");
+            $("#edit_city").val($(this).data("city")); // readonly field
             $("#edit_address").val($(this).data("address"));
             $("#edit_salary").val($(this).data("salary"));
             $("#edit_status").val($(this).data("status"));
+            $("#edit_designation").val($(this).data("designation")); // added designation
 
-            // Fetch areas based on city selection
             var selectedCity = $(this).data("city");
-            var selectedArea = $(this).data("area");
+            var areaJson = $(this).data("area");
 
-            if (selectedCity) {
-                $.ajax({
-                    url: "{{ route('fetch-areas') }}",
-                    type: "GET",
-                    data: {
-                        city_id: selectedCity
-                    },
-                    success: function(data) {
-                        $("#edit_area").html('<option value="">Select Area</option>');
-                        $.each(data, function(key, area) {
-                            $("#edit_area").append('<option value="' + area.area_name + '">' + area.area_name + '</option>');
-                        });
-
-                        // Set the correct area
-                        $("#edit_area").val(selectedArea);
-                    },
-                });
+            let selectedAreas = [];
+            try {
+                selectedAreas = JSON.parse(areaJson);
+            } catch (e) {
+                console.error("Area JSON decode error", e);
             }
+
+            $("#editAreaCheckboxes").html('<small class="text-muted">Loading areas...</small>');
+
+            $.ajax({
+                url: "{{ route('fetch-areas') }}",
+                type: "GET",
+                data: {
+                    city_id: selectedCity
+                },
+                success: function(data) {
+                    $("#editAreaCheckboxes").html('');
+                    if (data.length > 0) {
+                        $.each(data, function(key, area) {
+                            let isChecked = selectedAreas.includes(area.area_name) ? 'checked' : '';
+                            $("#editAreaCheckboxes").append(`
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="areas[]" value="${area.area_name}" id="edit_area_${area.id}" ${isChecked}>
+                            <label class="form-check-label" for="edit_area_${area.id}">${area.area_name}</label>
+                        </div>
+                    `);
+                        });
+                    } else {
+                        $("#editAreaCheckboxes").html('<small class="text-danger">No areas found for this city.</small>');
+                    }
+                },
+                error: function() {
+                    $("#editAreaCheckboxes").html('<small class="text-danger">Error loading areas.</small>');
+                }
+            });
         });
+
 
         $(".toggle-status").click(function() {
             var button = $(this);

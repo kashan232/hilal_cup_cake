@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome - FJL Lubricants Software</title>
+    <title>Welcome - Hilal Cup Cake Software</title>
     <!-- Google Fonts (Poppins for modern design) -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <!-- Bootstrap 4 CSS -->
@@ -44,7 +44,7 @@
         }
 
         .welcome-content h1 {
-            font-size: 4rem;
+            font-size: 3rem;
             /* Large font size for welcome text */
             font-weight: 600;
             letter-spacing: 2px;
@@ -70,13 +70,13 @@
         }
 
         .btn-login {
-            background-color: #0089fd;
+            background-color: #dc0934;
             /* Purple */
             color: white;
         }
 
         .btn-dashboard {
-            background-color: #0089fd;
+            background-color: #dc0934;
             /* Pink */
             color: white;
         }
@@ -105,7 +105,7 @@
         <div class="welcome-content">
             <!-- Logo -->
             <img src="welcome-logo.png" alt="Logo" class="logo">
-            <h1>Welcome to FJ Lubricant Soil Software</h1>
+            <h1>Welcome to Hilal Foods <br> HM Traders Software</h1>
             <!-- Buttons -->
             <div class="welcome-buttons">
                 @if (Route::has('login'))

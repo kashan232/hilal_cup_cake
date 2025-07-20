@@ -1799,7 +1799,7 @@ a:hover {
     padding: 0;
 }
 .input-group .scanner-set:hover {
-    background: #1b2850;
+    background: #dc0934;
 }
 .input-group {
     position: relative;
@@ -1861,7 +1861,7 @@ a:hover {
     padding: 0;
 }
 .form-group .btn-filters:hover {
-    background: #1b2850;
+    background: #dc0934;
 }
 .form-group textarea {
     border: 1px solid rgba(145, 158, 171, 0.32);
@@ -4091,7 +4091,7 @@ span.select2-container.select2-container--default.select2-container--open {
     width: 18px;
 }
 .sidebar .sidebar-menu > ul > li > a:hover {
-    background: #1b2850;
+    background: #dc0934;
     color: #fff;
     border-radius: 5px;
 }
@@ -4102,7 +4102,7 @@ span.select2-container.select2-container--default.select2-container--open {
     color: #fff;
 }
 .sidebar .sidebar-menu > ul > li > a.active {
-    background: #1b2850;
+    background: #dc0934;
     color: #fff;
     border-radius: 5px;
 }
@@ -4146,7 +4146,7 @@ span.select2-container.select2-container--default.select2-container--open {
     -ms-transform: rotate(90deg);
 }
 .sidebar .sidebar-menu > ul > li.active a {
-    background: #1b2850;
+    background: #dc0934;
     border-radius: 5px;
 }
 .sidebar .sidebar-menu > ul > li.active a img {
@@ -5430,7 +5430,7 @@ span.select2-container.select2-container--default.select2-container--open {
     }
 }
 .page-header .btn-added:hover {
-    background: #1b2850;
+    background: #dc0934;
 }
 .table-top {
     margin-bottom: 25px;
@@ -5454,7 +5454,7 @@ span.select2-container.select2-container--default.select2-container--open {
     display: none;
 }
 .search-set .btn-filter:hover {
-    background: #1b2850;
+    background: #dc0934;
 }
 .search-set .btn-filter.setclose {
     background: #ea5455;
@@ -5687,7 +5687,7 @@ span.select2-container.select2-container--default.select2-container--open {
     background: #00cfe8;
 }
 .dash-count.das2 {
-    background: #1b2850;
+    background: #dc0934;
 }
 .dash-count.das3 {
     background: #28c76f;
@@ -6345,7 +6345,7 @@ span.select2-container.select2-container--default.select2-container--open {
     }
 }
 .add-icon a:hover {
-    background: #1b2850;
+    background: #dc0934;
 }
 .cal-icon {
     background-image: url(../img/icons/calendars.svg);

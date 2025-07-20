@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
     <meta name="keywords">
-    <title>FJ Dashboard</title>
+    <title>HM Traders</title>
 
     <link rel="shortcut icon" type="image/x-icon" href="{{ env('APP_URL') }}public/assets/img/favicon.png">
     <link rel="stylesheet" href="{{ env('APP_URL') }}public/assets/css/bootstrap.min.css">

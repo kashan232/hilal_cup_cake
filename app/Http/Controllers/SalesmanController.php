@@ -6,9 +6,11 @@ use App\Models\Salesman;
 use App\Models\City;
 use App\Models\Area;
 use App\Models\Designation;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class SalesmanController extends Controller
 {
@@ -33,20 +35,33 @@ class SalesmanController extends Controller
     {
         if (Auth::id()) {
             $userId = Auth::id();
-            Salesman::create([
+            $salesman = Salesman::create([
                 'admin_or_user_id' => $userId,
                 'name' => $request->name,
                 'phone' => $request->phone,
                 'designation' => $request->designation,
                 'city' => $request->city,
-                'area' => $request->area,
+                'area' => json_encode($request->areas),
                 'address' => $request->address,
                 'salary' => $request->salary,
                 'status' => $request->status,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-            return redirect()->back()->with('success', 'Salesman added successfully');
+
+            User::create([
+                'user_id' => $salesman->id,
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'usertype' => $request->designation,
+                'city' => $request->city,
+                'area' => json_encode($request->areas),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return redirect()->back()->with('success', 'Staff added successfully');
         } else {
             return redirect()->back();
         }
@@ -55,22 +70,36 @@ class SalesmanController extends Controller
     public function update_salesman(Request $request)
     {
         $salesman_id = $request->input('salesman_id');
+
         $salesman = Salesman::find($salesman_id);
         if (!$salesman) {
             return redirect()->back()->with('error', 'Salesman not found!');
         }
 
+        // Update Salesman Table
         $salesman->update([
             'name' => $request->name,
             'phone' => $request->phone,
             'designation' => $request->designation,
             'city' => $request->city,
-            'area' => $request->area,
+            'area' => json_encode($request->areas), // Make sure 'areas' is an array
             'address' => $request->address,
             'salary' => $request->salary,
             'status' => $request->status,
             'updated_at' => now(),
         ]);
+
+        // Update User Table
+        $user = User::where('user_id', $salesman_id)->first();
+        if ($user) {
+            $user->update([
+                'name' => $request->name,
+                'usertype' => $request->designation,
+                'city' => $request->city,
+                'area' => json_encode($request->areas),
+                'updated_at' => now(),
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Salesman updated successfully');
     }

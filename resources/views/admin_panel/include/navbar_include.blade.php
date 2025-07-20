@@ -1,10 +1,10 @@
 <div class="header">
 	<div class="header-left active">
 		<a href="#" class="logo">
-			<img src="{{ url('logo.jpeg') }}" alt="">
+			<img src="{{ url('logo.png') }}" alt="">
 		</a>
 		<a href="#" class="logo-small">
-			<img src="{{ url('logo.jpeg') }}" alt="">
+			<img src="{{ url('logo.png') }}" alt="">
 		</a>
 		<a id="toggle_btn" href="javascript:void(0);">
 		</a>
