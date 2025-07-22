@@ -90,6 +90,7 @@
                                     <th>OrderBooker</th>
                                     <th>Salesman</th>
                                     <th>Status</th>
+                                    <th>Assigned & Date</th>
                                     <th>Payment Status</th>
                                     <th>Action</th>
                                 </tr>
@@ -110,6 +111,19 @@
                                             {{ ucfirst($bill->status) }}
                                         </span>
                                     </td>
+                                    <td>
+                                        @if($bill->assign_type && $bill->assign_user_id)
+                                        <span class="badge bg-info">
+                                            {{ ucfirst($bill->assign_type) }} - {{ $bill->assignUser->name ?? 'Unknown' }}
+                                            <br>
+                                        </span>
+                                        <br>
+                                        <span>{{ \Carbon\Carbon::parse($bill->asigned_date)->format('d M Y') }}</span>
+                                        @else
+                                        <span class="badge bg-secondary">Not Assigned</span>
+                                        @endif
+                                    </td>
+
 
                                     <!-- Payment Status Badge -->
                                     <td>

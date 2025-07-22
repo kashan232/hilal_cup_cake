@@ -26,4 +26,9 @@ class CreateBill extends Model
     {
         return $this->belongsTo(Salesman::class, 'salesman_id');
     }
+
+    public function assignUser()
+    {
+        return $this->belongsTo(Salesman::class, 'assign_user_id');
+    }
 }

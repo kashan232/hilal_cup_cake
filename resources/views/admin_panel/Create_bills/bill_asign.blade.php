@@ -22,7 +22,7 @@
                         @endif
                         @csrf
                         <div class="row mb-4">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label for="assign_to" class="form-label">Assign To</label>
                                 <select class="form-select" id="assign_to" name="assign_to">
                                     <option value="" disabled selected>-- Select Role --</option>
@@ -31,14 +31,18 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label for="user_id" class="form-label">Select User</label>
                                 <select class="form-select" id="user_id" name="user_id">
                                     <option value="">-- Select User --</option>
                                 </select>
                             </div>
+                            <div class="col-md-3">
+                                <label for="user_id" class="form-label">Asigned Date </label>
+                                <input type="date" name="asigned_date" class="form-control">
+                            </div>
 
-                            <div class="col-md-4 d-flex align-items-end">
+                            <div class="col-md-3 d-flex align-items-end">
                                 <button type="submit" class="btn btn-primary w-100">Assign Selected Bills</button>
                             </div>
                         </div>
@@ -49,6 +53,7 @@
                                     <tr>
                                         <th><input type="checkbox" id="select_all"></th>
                                         <th>Invoice No</th>
+                                        <th>Customer Name</th>
                                         <th>Bill Date</th>
                                         <th>Bill Amount</th>
                                     </tr>
@@ -99,15 +104,17 @@
                 let rows = '';
                 bills.forEach(function(bill) {
                     rows += `
-                        <tr>
-                            <td><input type="checkbox" name="bill_ids[]" value="${bill.id}"></td>
-                            <td>${bill.invoice_number}</td>
-                            <td>${bill.date}</td>
-                            <td>Rs. ${parseFloat(bill.amount).toLocaleString()}</td>
-                        </tr>`;
+            <tr>
+                <td><input type="checkbox" name="bill_ids[]" value="${bill.id}"></td>
+                <td>${bill.invoice_number}</td>
+                <td>${bill.customer?.customer_name ?? 'N/A'}</td>
+                <td>${bill.date}</td>
+                <td>Rs. ${parseFloat(bill.amount).toLocaleString()}</td>
+            </tr>`;
                 });
                 $('tbody').html(rows);
             }
+
         });
     });
 
