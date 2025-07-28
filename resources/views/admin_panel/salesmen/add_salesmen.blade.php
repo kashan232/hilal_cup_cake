@@ -11,10 +11,17 @@
                         <h6>Manage Staff Management</h6>
                     </div>
                     <div class="page-btn">
+                        @if(Auth::user()->usertype === 'admin')
                         <button class="btn btn-added" data-bs-toggle="modal" data-bs-target="#addSalesmanModal">
                             <img src="assets/img/icons/plus.svg" class="me-1" alt="img">Add Staff
                         </button>
+                        @else
+                        <button class="btn btn-danger" disabled>
+                            No Right
+                        </button>
+                        @endif
                     </div>
+
                 </div>
 
                 <div class="card">
@@ -64,16 +71,23 @@
 
 
                                         <td>{{ $salesman->address }}</td>
-                                        <td>{{ number_format($salesman->salary, 2) }}</td>
+                                        <td> @if(Auth::user()->usertype === 'admin')
+                                            {{ number_format($salesman->salary, 2) }}
+                                            @else
+                                            ---
+                                            @endif
+                                        </td>
                                         <td>
-                                            <button class="btn btn-sm toggle-status"
+                                            <button class="btn btn-sm toggle-status 
+        {{ $salesman->status == 1 ? 'btn-success' : 'btn-danger' }}"
                                                 data-id="{{ $salesman->id }}"
                                                 data-status="{{ $salesman->status }}">
                                                 {{ $salesman->status == 1 ? 'Active' : 'Inactive' }}
                                             </button>
                                         </td>
-                                        {{-- <td>{{ $salesman->status == 1 ? 'Active' : 'Inactive' }}</td> --}}
+
                                         <td>
+                                            @if(Auth::user()->usertype === 'admin')
                                             <button class="btn btn-sm btn-primary editSalesmanBtn"
                                                 data-id="{{ $salesman->id }}"
                                                 data-name="{{ $salesman->name }}"
@@ -86,6 +100,11 @@
                                                 data-bs-toggle="modal" data-bs-target="#editSalesmanModal">
                                                 Edit
                                             </button>
+                                            @else
+                                            <button class="btn btn-sm btn-danger">
+                                                No Right
+                                            </button>
+                                            @endif
                                         </td>
                                     </tr>
                                     @endforeach

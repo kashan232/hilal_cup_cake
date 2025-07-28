@@ -2,7 +2,18 @@
 <div class="main-wrapper">
     @include('admin_panel.include.navbar_include')
     @include('admin_panel.include.admin_sidebar_include')
+    <style>
+        .blink {
+            animation: blink-animation 1s steps(5, start) infinite;
+            -webkit-animation: blink-animation 1s steps(5, start) infinite;
+        }
 
+        @keyframes blink-animation {
+            to {
+                visibility: hidden;
+            }
+        }
+    </style>
     <div class="page-wrapper">
         <div class="content">
             <div class="page-header d-flex justify-content-between align-items-center">
@@ -97,12 +108,22 @@
                             </thead>
                             <tbody>
                                 @foreach($bills as $index => $bill)
-                                <tr>
+                                @php
+                                $status = strtolower($bill->payment_status);
+                                $assignedDate = $bill->asigned_date ? \Carbon\Carbon::parse($bill->asigned_date) : null;
+                                $now = \Carbon\Carbon::now();
+                                $daysPassed = $assignedDate ? $assignedDate->diffInDays($now) : 0;
+                                $showAlert = $bill->status === 'assigned' && $status !== 'paid' && $daysPassed >= 5;
+                                $rowBg = $showAlert ? 'style=background-color:#ffcccc;' : '';
+                                @endphp
+                                <tr {!! $rowBg !!}>
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $bill->customer->customer_name ?? 'N/A' }}</td>
                                     <td>{{ $bill->invoice_number }}</td>
                                     <td>{{ \Carbon\Carbon::parse($bill->date)->format('d-m-Y') }}</td>
-                                    <td>Rs. {{ number_format($bill->amount, 2) }}</td>
+                                    <td>
+                                        Rs. {{ number_format($bill->amount, 2) }}
+                                    </td>
                                     <td>{{ $bill->orderBooker->name ?? 'N/A' }}</td>
                                     <td>{{ $bill->salesman->name ?? 'N/A' }}</td>
                                     <!-- Status Badge -->
@@ -126,11 +147,32 @@
 
 
                                     <!-- Payment Status Badge -->
+                                    <!-- Payment Status Badge with Remaining Amount -->
                                     <td>
-                                        <span class="badge p-2 {{ $bill->payment_status == 'unpaid' ? 'bg-success' : 'bg-danger' }}">
-                                            {{ ucfirst($bill->payment_status) }}
+                                        @php
+                                        $paymentStatus = $bill->payment_status;
+
+                                        $colorClass = $paymentStatus === 'Paid' ? 'bg-success text-white'
+                                        : ($paymentStatus === 'Partially Paid' ? 'bg-warning text-dark' : 'bg-danger text-white');
+                                        @endphp
+
+                                        <span class="badge p-2 {{ $colorClass }}">
+                                            {{ $paymentStatus }}
                                         </span>
+
+                                        @if($paymentStatus !== 'Paid')
+                                        <div class="text-muted small mt-1">
+                                            Remaining: Rs. {{ $bill->remaining_amount }}
+                                        </div>
+                                        @endif
+
+                                        @if($showAlert)
+                                        <div class="mt-1 text-danger fw-bold blink">
+                                            ⚠ Payment Overdue!
+                                        </div>
+                                        @endif
                                     </td>
+
 
                                     <td>
                                         <a href="javascript:void(0);"

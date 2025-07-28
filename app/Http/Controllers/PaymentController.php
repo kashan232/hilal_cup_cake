@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CreateBill;
 use App\Models\Customer;
 use App\Models\CustomerLedger;
 use App\Models\CustomerRecovery;
@@ -92,72 +93,119 @@ class PaymentController extends Controller
 
             $customers = Customer::where('admin_or_user_id', $userId)
                 ->get(['id', 'customer_name', 'shop_name', 'area']);
-
-            $Salesmans = Salesman::where('admin_or_user_id', $userId)
-                ->where('designation', 'Saleman')
+            $orderbooker = Salesman::where('admin_or_user_id', $userId)
+                ->where('designation', 'orderbooker')
                 ->get();
 
-            return view('admin_panel.payments.customers_payments', compact('customers', 'Salesmans'));
+            return view('admin_panel.payments.customers_payments', compact('customers', 'orderbooker'));
         } else {
             return redirect()->back();
         }
     }
 
 
-    public function getCustomerBalance($id)
-    {
-        $customer = Customer::with(['localSales' => function ($q) {
-            $q->select('id', 'customer_id', 'Date as sale_date', 'grand_total as total')->latest()->take(10);
-        }])->find($id);
-
-        if (!$customer) {
-            return response()->json(['balance' => 0, 'sales' => []]);
-        }
-
-        $latestLedger = CustomerLedger::where('customer_id', $id)
-            ->latest('id')
-            ->first();
-
-        $closingBalance = $latestLedger ? $latestLedger->closing_balance : 0;
-
-        return response()->json([
-            'balance' => $closingBalance,
-            'sales' => $customer->localSales ?? []
-        ]);
-    }
-
 
     public function storeCustomerPayment(Request $request)
     {
-        // Validate request if needed here
+        $request->validate([
+            'customer_id'     => 'required|exists:customers,id',
+            'ordbker_id'      => 'required|exists:users,id',
+            'payment_date'    => 'required|date',
+            'payment_method'  => 'nullable|string',
+            'bill_ids'        => 'nullable|array',
+            'amount_received' => 'nullable|array',
+        ]);
 
         $latestLedger = CustomerLedger::where('customer_id', $request->customer_id)
             ->latest('id')
             ->first();
 
         if (!$latestLedger) {
-            return redirect()->back()->with('error', 'Ledger record not found for this customer.');
+            return redirect()->back()->with('error', 'Customer ledger not found.');
         }
 
         $previous_balance = $latestLedger->closing_balance;
-        $new_closing_balance = $previous_balance - $request->amount;
+        $amount_paid_total = 0;
 
-        // Update ledger closing balance
+        if ($request->has('bill_ids') && is_array($request->bill_ids)) {
+            foreach ($request->bill_ids as $bill_id) {
+                $amount_paid_total += floatval($request->amount_received[$bill_id] ?? 0);
+            }
+        }
+
+        $new_closing_balance = $previous_balance - $amount_paid_total;
+
         $latestLedger->update([
-            'closing_balance' => $new_closing_balance,
+            'admin_or_user_id'  => auth()->id(),
+            'opening_balance'   => $latestLedger->opening_balance,
+            'previous_balance'  => $previous_balance,
+            'closing_balance'   => $new_closing_balance,
         ]);
 
-        // Create new recovery record
-        CustomerRecovery::create([
-            'admin_or_user_id' => auth()->id(),
-            'customer_ledger_id' => $latestLedger->id,  // Important: Link to ledger record ID
-            'amount_paid' => $request->amount,
-            'salesman' => $request->salesman, // add if applicable
-            'date' => $request->date,
-            'remarks' => $request->detail, // Use remarks or bank input
+        $recovery = CustomerRecovery::create([
+            'admin_or_user_id'     => auth()->id(),
+            'customer_ledger_id'   => $latestLedger->id,
+            'amount_paid'          => $amount_paid_total,
+            'salesman'             => $request->ordbker_id,
+            'date'                 => $request->payment_date,
+            'remarks'              => $request->payment_method,
         ]);
 
-        return redirect()->back()->with('success', 'Payment recorded successfully.');
+        if ($request->has('bill_ids') && is_array($request->bill_ids)) {
+            foreach ($request->bill_ids as $bill_id) {
+                $bill = CreateBill::find($bill_id);
+
+                if (!$bill) continue;
+
+                $amount_received_for_bill = floatval($request->amount_received[$bill_id] ?? 0);
+                $previous_remaining = $bill->remaining_amount !== null
+                    ? $bill->remaining_amount
+                    : $bill->amount;
+
+                // Avoid overpayment
+                if ($amount_received_for_bill > $previous_remaining) {
+                    $amount_received_for_bill = $previous_remaining;
+                }
+
+                $new_remaining = max($previous_remaining - $amount_received_for_bill, 0);
+
+                if ($new_remaining <= 0) {
+                    $payment_status = 'Paid';
+                } elseif ($new_remaining < $bill->amount) {
+                    $payment_status = 'Partially Paid';
+                } else {
+                    $payment_status = 'Unpaid';
+                }
+
+                $bill->update([
+                    'payment_status'   => $payment_status,
+                    'remaining_amount' => $new_remaining,
+                    'status'           => 'Assigned',
+                ]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Payment recorded and bills updated successfully.');
+    }
+
+
+
+
+    public function getCustomerBalance($id)
+    {
+        $latestLedger = CustomerLedger::where('customer_id', $id)->latest()->first();
+        $balance = $latestLedger ? $latestLedger->closing_balance : 0;
+
+        return response()->json(['closing_balance' => $balance]);
+    }
+
+    public function getCustomerBills($id)
+    {
+        $bills = CreateBill::with('customer') // eager load customer relationship
+            ->where('customer_id', $id)
+            ->whereIn('payment_status', ['Unpaid', 'Partially Paid'])
+            ->get(['id', 'invoice_number', 'date', 'amount', 'remaining_amount', 'payment_status', 'customer_id']);
+        return response()->json($bills);
     }
 
 

@@ -2,6 +2,16 @@
 <div class="main-wrapper">
     @include('admin_panel.include.navbar_include')
     @include('admin_panel.include.admin_sidebar_include')
+    <style>
+        .badge {
+            font-size: 13px;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
 
     <div class="page-wrapper">
         <div class="content">
@@ -11,71 +21,101 @@
                     <h6>Manage Customer Payments Efficiently</h6>
                 </div>
             </div>
+
             <div class="card p-4">
                 <div class="card-body">
                     <form action="{{ route('customer.payment.store') }}" method="POST">
                         @csrf
+                        @if (session()->has('success'))
+                        <div class="alert alert-success">
+                            <strong>Success!</strong> {{ session('success') }}.
+                        </div>
+                        @endif
+                        {{-- Customer Dropdown --}}
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="customer" class="form-label text-dark">Received From <span class="text-danger">*</span></label>
-                                <select id="customer" name="customer_id" class="form-select select2-basic" required>
-                                    <option selected disabled>Select Customer</option>
+                                <label>Customer</label>
+                                <select name="customer_id" id="customer" class="form-control" required>
+                                    <option value="">Select Customer</option>
                                     @foreach($customers as $customer)
-                                    <option value="{{ $customer->id }}"> {{ $customer->shop_name }} ({{ $customer->customer_name }}) ({{ $customer->area }}) </option>
+                                    <option value="{{ $customer->id }}">
+                                        {{ $customer->customer_name }} - {{ $customer->shop_name }} ({{ $customer->area }})
+                                    </option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-6">
-                                <label for="amount" class="form-label text-dark">Payment Amount (PKR) <span class="text-danger">*</span></label>
-                                <input type="number" id="amount" name="amount" class="form-control" placeholder="Enter payment amount" required>
-                            </div>
-                        </div>
 
-                        <div class="row mb-3">
+                            {{-- ordbker Dropdown --}}
                             <div class="col-md-6">
-                                <label for="date" class="form-label text-dark">Payment Date <span class="text-danger">*</span></label>
-                                <input type="date" id="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="bank" class="form-label text-dark">Salesman <span class="text-danger">*</span></label>
-                                <select class="form-control" id="salesman" name="salesman" required>
-                                    <option value="" disabled>Select Salesman</option>
-                                    @foreach($Salesmans as $saleman)
-                                    <option value="{{ $saleman->name }}">{{ $saleman->name }}</option>
+                                <label>Booker</label>
+                                <select name="ordbker_id" class="form-control" required>
+                                    <option value="">Select ordbker</option>
+                                    @foreach($orderbooker as $ordbker)
+                                    <option value="{{ $ordbker->id }}">{{ $ordbker->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="detail" class="form-label text-dark">Payment Method Details (e.g. JazzCash, EasyPaisa)</label>
-                            <input type="text" id="detail" name="detail" class="form-control" placeholder="Enter additional payment details">
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <label>Payment Method</label>
+                                <select name="payment_method" class="form-control" required>
+                                    <option value="">Select Method</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Bank">Bank</option>
+                                    <option value="Cheque">Cheque</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label>Payment Date</label>
+                                <input type="date" name="payment_date" value="{{ date('Y-m-d') }}" class="form-control" required>
+                            </div>
                         </div>
 
-                        <div class="text-end fw-bold text-secondary mb-3">
-                            Customer Balance: <span id="customer_balance" class="text-dark">PKR 0</span>
+                        {{-- Closing Balance Display --}}
+                        <div class="alert alert-danger mt-3" id="closing_balance_box" style="display:none;">
+                            <strong>Closing Balance:</strong> Rs. <span id="closing_balance">0</span>
                         </div>
 
-                        <div class="table-responsive mb-4">
-                            <label class="form-label text-dark d-block mb-2">Last 10 Sales</label>
-                            <table class="table table-bordered" id="sales_table">
-                                <thead class="table-success">
+
+
+
+                        {{-- Bill Table --}}
+                        <div class="table-responsive mt-3">
+                            <table class="table table-bordered" id="bill_recovery_table">
+                                <thead>
                                     <tr>
+                                        <th><input type="checkbox" id="select_all"></th>
+                                        <th>Invoice No.</th>
                                         <th>Date</th>
-                                        <th>Amount (PKR)</th>
+                                        <th>Customer Name</th>
+                                        <th>Total Amount</th>
+                                        <th>Remaining</th> <!-- NEW -->
+                                        <th>Payment Status</th>
+                                        <th>Amount Received</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {{-- Populated by JS --}}
+                                    <tr>
+                                        <td colspan="6" class="text-center">Select a customer to view unpaid bills.</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
 
-                        <div class="d-flex justify-content-center gap-3">
-                            <button type="submit" class="btn btn-success">Save & Close</button>
-                            <button type="submit" class="btn btn-primary">Save & Add New</button>
+
+                        {{-- Total Selected Amount --}}
+                        <div class="alert alert-success mt-3" id="total_box" style="display:none;">
+                            <strong>Total Selected Amount:</strong> Rs. <span id="total_amount">0</span>
                         </div>
 
+                        {{-- Submit --}}
+                        <div class="text-end mt-3">
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -83,45 +123,100 @@
     </div>
 </div>
 @include('admin_panel.include.footer_include')
-
 <script>
-    const routeTemplate = "{{ route('get.customer.balance', ['id' => 'CUSTOMER_ID']) }}";
+    const balanceRoute = "{{ route('get.customer.balance', ['id' => '__id__']) }}";
+    const billRoute = "{{ route('get.customer.bills', ['id' => '__id__']) }}";
 
     function fetchCustomerData(customerId) {
-        let url = routeTemplate.replace('CUSTOMER_ID', customerId);
-
-        fetch(url)
-            .then(response => response.json())
+        const route = balanceRoute.replace('__id__', customerId);
+        fetch(route)
+            .then(res => res.json())
             .then(data => {
-                document.getElementById('customer_balance').innerText = 'PKR ' + data.balance;
-
-                let tbody = document.querySelector('#sales_table tbody');
-                tbody.innerHTML = '';
-
-                if (data.sales && data.sales.length > 0) {
-                    data.sales.forEach(sale => {
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${sale.sale_date}</td>
-                                <td>${sale.total}</td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="2">No Sales Found</td></tr>';
-                }
+                $('#closing_balance').text(data.closing_balance);
+                $('#closing_balance_box').show();
             });
     }
 
+    function fetchCustomerBills(customerId) {
+        const route = billRoute.replace('__id__', customerId);
+        fetch(route)
+            .then(res => res.json())
+            .then(bills => {
+                let tbody = $('#bill_recovery_table tbody');
+                tbody.empty();
+
+                if (bills.length === 0) {
+                    tbody.html('<tr><td colspan="5" class="text-center">No unpaid or partial bills found.</td></tr>');
+                } else {
+                    bills.forEach(bill => {
+                        let statusClass = '';
+                        if (bill.payment_status === 'Unpaid') {
+                            statusClass = 'bg-danger';
+                        } else if (bill.payment_status === 'Partially Paid') {
+                            statusClass = 'bg-warning text-dark';
+                        } else if (bill.payment_status === 'Paid') {
+                            statusClass = 'bg-success';
+                        }
+
+                        tbody.append(`
+<tr>
+    <td>
+        <input type="checkbox" name="bill_ids[]" value="${bill.id}" class="bill_checkbox" data-amount="${bill.amount}">
+        <input type="hidden" name="bill_amounts[${bill.id}]" value="${bill.amount}">
+    </td>
+    <td>${bill.invoice_number}</td>
+    <td>${bill.date}</td>
+    <td>${bill.customer?.customer_name ?? 'N/A'}</td>
+    <td>Rs. ${parseFloat(bill.amount).toLocaleString()}</td>
+    <td>Rs. ${parseFloat(bill.remaining_amount ?? bill.amount).toLocaleString()}</td> <!-- NEW -->
+    <td><span class="badge ${statusClass} p-2">${bill.payment_status}</span></td>
+    <td>
+        <input type="number" name="amount_received[${bill.id}]" step="0.01" min="0" class="form-control">
+    </td>
+</tr>
+`);
+                    });
+
+                }
+
+                $('#total_box').hide();
+                $('#total_amount').text(0);
+            });
+    }
+
+    $(document).on('change', '.bill_checkbox', function() {
+        // Optional: you can auto-fill full amount if you want
+        const row = $(this).closest('tr');
+        const amountInput = row.find('input[name^="amount_received"]');
+
+        if (this.checked && !amountInput.val()) {
+            amountInput.val($(this).data('amount')); // Auto-fill default
+        }
+    });
+
     $(document).ready(function() {
-        $('#customer').on('change', function() {
-            let customerId = $(this).val();
+        $('#customer').change(function() {
+            const customerId = $(this).val();
             if (customerId) {
                 fetchCustomerData(customerId);
-            } else {
-                document.getElementById('customer_balance').innerText = 'PKR 0';
-                document.querySelector('#sales_table tbody').innerHTML = '<tr><td colspan="2">No Sales Found</td></tr>';
+                fetchCustomerBills(customerId);
             }
+        });
+
+        // Total Calculation
+        $(document).on('change', '.bill_checkbox', function() {
+            let total = 0;
+            $('.bill_checkbox:checked').each(function() {
+                total += parseFloat($(this).data('amount'));
+            });
+
+            $('#total_amount').text(total.toLocaleString());
+            $('#total_box').toggle(total > 0);
+        });
+
+        // Select All
+        $(document).on('change', '#select_all', function() {
+            $('.bill_checkbox').prop('checked', this.checked).trigger('change');
         });
     });
 </script>

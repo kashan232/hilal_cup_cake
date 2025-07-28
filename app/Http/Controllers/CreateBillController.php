@@ -121,27 +121,41 @@ class CreateBillController extends Controller
 
     public function bills()
     {
-        if (Auth::id()) {
-            $userId = Auth::id();
-            $bills = CreateBill::with(['customer', 'orderBooker', 'salesman', 'assignUser'])
-                ->where('admin_or_user_id', $userId)
-                ->get();
-
-            $OrderBookers = Salesman::where('admin_or_user_id', $userId)
-                ->where('designation', 'orderbooker')
-                ->get();
-
-            $Salesmen = Salesman::where('admin_or_user_id', $userId)
-                ->where('designation', 'saleman')
-                ->get();
-
-            $Customers = Customer::where('admin_or_user_id', $userId)->get();
-
-            return view('admin_panel.Create_bills.all_bills', compact('bills', 'OrderBookers', 'Salesmen', 'Customers'));
-        } else {
+        if (!Auth::check()) {
             return redirect()->back();
         }
+
+        $user = Auth::user();
+        $userId = $user->user_id;
+
+        if ($user->usertype === 'admin') {
+            // Admin sees all bills
+            $bills = CreateBill::with(['customer', 'orderBooker', 'salesman', 'assignUser'])->get();
+        } elseif ($user->usertype === 'orderbooker') {
+            // Order Booker sees only Assigned bills either assigned to him or created by him
+            $bills = CreateBill::with(['customer', 'orderBooker', 'salesman', 'assignUser'])
+                ->where('status', 'Assigned') // show only assigned bills
+                ->where(function ($query) use ($userId) {
+                    $query->where('order_booker_id', $userId)
+                        ->orWhere(function ($q) use ($userId) {
+                            $q->where('assign_type', 'booker')
+                                ->where('assign_user_id', $userId);
+                        });
+                })
+                ->get();
+        } else {
+            // Others see nothing
+            $bills = collect();
+        }
+
+        $OrderBookers = Salesman::where('designation', 'orderbooker')->get();
+        $Salesmen = Salesman::where('designation', 'saleman')->get();
+        $Customers = Customer::all();
+
+        return view('admin_panel.Create_bills.all_bills', compact('bills', 'OrderBookers', 'Salesmen', 'Customers'));
     }
+
+
 
     public function deleteBill(Request $request)
     {

@@ -20,6 +20,7 @@
 	<ul class="nav user-menu">
 		<li class="nav-item">
 			<div class="top-nav-search">
+				
 				<a href="javascript:void(0);" class="responsive-search">
 					<i class="fa fa-search"></i>
 				</a>

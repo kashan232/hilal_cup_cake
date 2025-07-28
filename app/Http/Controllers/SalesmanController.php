@@ -17,18 +17,40 @@ class SalesmanController extends Controller
     // Salesmen List and Add Salesman
     public function salesmen()
     {
-        if (Auth::id()) {
-            $userId = Auth::id();
-            $salesmen = Salesman::where('admin_or_user_id', Auth::id())
-                ->with(['city', 'area', 'designationRelation']) // Use the renamed method
-                ->get();
-            $city = City::all();
-            $designation = Designation::all(); // Fetch all designations
-            return view('admin_panel.salesmen.add_salesmen', compact('salesmen', 'city', 'designation'));
-        } else {
+        if (!Auth::check()) {
             return redirect()->back();
         }
+
+        $user = Auth::user();
+
+        if ($user->usertype === 'admin') {
+            $salesmen = Salesman::with(['city', 'area', 'designationRelation'])->get();
+        } elseif ($user->usertype === 'orderbooker') {
+            $userAreas = json_decode($user->area, true); // Booker assigned areas
+
+            $allSalesmen = Salesman::where('designation', 'saleman')
+                ->with(['city', 'area', 'designationRelation'])
+                ->get();
+
+            $salesmen = $allSalesmen->filter(function ($salesman) use ($userAreas) {
+                $salesmanAreas = json_decode($salesman->area, true);
+
+                if (is_array($salesmanAreas)) {
+                    return !empty(array_intersect($userAreas, $salesmanAreas));
+                }
+
+                return false;
+            })->values(); // Reset keys
+        } else {
+            $salesmen = collect();
+        }
+
+        $city = City::all();
+        $designation = Designation::all();
+
+        return view('admin_panel.salesmen.add_salesmen', compact('salesmen', 'city', 'designation'));
     }
+
 
     // Store Salesman (already correctly handles adding new salesman)
     public function store_salesman(Request $request)

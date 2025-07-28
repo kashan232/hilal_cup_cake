@@ -236,8 +236,9 @@ Route::post('/vendor-payment-store', [PaymentController::class, 'storeVendorPaym
 Route::get('/get-vendor-balance/{id}', [PaymentController::class, 'getVendorBalance'])->name('get-Vendor-balance');
 
 Route::get('/customer-payments', [PaymentController::class, 'customer_payments'])->name('customer-payments');
-Route::get('/get-customer-balance/{id}', [PaymentController::class, 'getCustomerBalance'])->name('get.customer.balance');
 Route::post('/customer-payment/store', [PaymentController::class, 'storeCustomerPayment'])->name('customer.payment.store');
+Route::get('/get-customer-balance/{id}', [PaymentController::class, 'getCustomerBalance'])->name('get.customer.balance');
+Route::get('/get-customer-bills/{id}', [PaymentController::class, 'getCustomerBills'])->name('get.customer.bills');
 
 
 Route::get('/Distributor-payments', [PaymentController::class, 'Distributor_payments'])->name('Distributor-payments');
