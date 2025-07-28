@@ -89,19 +89,33 @@ class PaymentController extends Controller
     public function customer_payments()
     {
         if (Auth::id()) {
-            $userId = Auth::id();
+            $user = Auth::user();
+            if ($user->usertype == 'admin') {
+                // Admin ho to sab orderbookers aur customers dikhao
+                $customers = Customer::where('admin_or_user_id', $user->id)
+                    ->get(['id', 'customer_name', 'shop_name', 'area']);
 
-            $customers = Customer::where('admin_or_user_id', $userId)
-                ->get(['id', 'customer_name', 'shop_name', 'area']);
-            $orderbooker = Salesman::where('admin_or_user_id', $userId)
-                ->where('designation', 'orderbooker')
-                ->get();
+                $orderbooker = Salesman::where('admin_or_user_id', $user->id)
+                    ->where('designation', 'orderbooker')
+                    ->get();
+            } elseif ($user->usertype == 'orderbooker') {
+                // Orderbooker ho to sirf uska hi data dikhao
+                $booker = Salesman::where('id', $user->user_id)
+                    ->where('designation', 'orderbooker')
+                    ->first();
+
+                $customers = Customer::get(['id', 'customer_name', 'shop_name', 'area']);
+
+                // sirf apna hi show karega
+                $orderbooker = collect([$booker]);
+            }
 
             return view('admin_panel.payments.customers_payments', compact('customers', 'orderbooker'));
         } else {
             return redirect()->back();
         }
     }
+
 
 
 

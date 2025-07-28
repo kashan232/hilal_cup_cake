@@ -49,7 +49,7 @@
                             <div class="col-md-6">
                                 <label>Booker</label>
                                 <select name="ordbker_id" class="form-control" required>
-                                    <option value="">Select ordbker</option>
+                                    <option value="">Select Order Booker</option>
                                     @foreach($orderbooker as $ordbker)
                                     <option value="{{ $ordbker->id }}">{{ $ordbker->name }}</option>
                                     @endforeach
