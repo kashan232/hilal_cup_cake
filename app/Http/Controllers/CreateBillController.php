@@ -127,8 +127,7 @@ class CreateBillController extends Controller
 
         $user = Auth::user();
         $userId = $user->user_id;
-
-        if ($user->usertype === 'admin') {
+        if ($user->usertype === 'admin' || $user->usertype === 'accountant') {
             // Admin sees all bills
             $bills = CreateBill::with(['customer', 'orderBooker', 'salesman', 'assignUser'])->get();
         } elseif ($user->usertype === 'orderbooker') {
@@ -142,6 +141,12 @@ class CreateBillController extends Controller
                                 ->where('assign_user_id', $userId);
                         });
                 })
+                ->get();
+        } elseif ($user->usertype === 'saleman') {
+            // Salesman sees only bills assigned to them by order booker
+            $bills = CreateBill::with(['customer', 'orderBooker', 'salesman', 'assignUser'])
+                ->where('assign_type', 'salesman')
+                ->where('assign_user_id', $userId)
                 ->get();
         } else {
             // Others see nothing
@@ -213,7 +218,20 @@ class CreateBillController extends Controller
 
         return response()->json(['message' => 'Bill updated successfully.']);
     }
+    public function extendAssignedDate(Request $request)
+    {
+        $request->validate([
+            'bill_id' => 'required|exists:create_bills,id',
+            'new_assigned_date' => 'required|date',
+        ]);
 
+        $bill = CreateBill::find($request->bill_id);
+        $bill->asigned_date = $request->new_assigned_date;
+        $bill->updated_at = now();
+        $bill->save();
+
+        return redirect()->back()->with('success', 'Assigned date updated successfully.');
+    }
     public function bill_asign()
     {
         if (Auth::id()) {
@@ -238,27 +256,84 @@ class CreateBillController extends Controller
     public function fetchUsersByRole(Request $request)
     {
         $role = $request->role;
-        $userId = Auth::id();
+        $user = Auth::user();
 
-        $users = Salesman::where('admin_or_user_id', $userId)
-            ->where('designation', $role == 'booker' ? 'orderbooker' : 'saleman')
-            ->get();
+        if (!$user) {
+            return response()->json([], 401); // Unauthorized
+        }
+
+        // Admin logic
+        if ($user->usertype === 'admin') {
+            $users = Salesman::where('designation', $role === 'booker' ? 'orderbooker' : 'saleman')
+                ->get();
+        }
+
+        // Orderbooker logic (filter salesmen based on area)
+        elseif ($user->usertype === 'orderbooker' && $role === 'salesman') {
+            $userAreas = json_decode($user->area, true);
+
+            $allSalesmen = Salesman::where('designation', 'saleman')->get();
+
+            $users = $allSalesmen->filter(function ($salesman) use ($userAreas) {
+                $salesmanAreas = json_decode($salesman->area, true);
+
+                if (is_array($salesmanAreas)) {
+                    return !empty(array_intersect($userAreas, $salesmanAreas));
+                }
+
+                return false;
+            })->values(); // Reset collection keys
+        }
+
+        // Any other case, return empty
+        else {
+            $users = collect();
+        }
 
         return response()->json($users);
     }
 
+
     // Fetch Unassigned Bills (AJAX)
     public function fetchUnassignedBills()
     {
-        $userId = Auth::id();
+        $user = Auth::user();
 
-        $bills = CreateBill::with('customer') // Load customer relation
-            ->where('admin_or_user_id', $userId)
-            ->where('status', 'unassigned')
-            ->get();
+        if (!$user) {
+            return response()->json([], 401); // Unauthorized
+        }
+
+        // Admin sees all unassigned bills
+        if ($user->usertype === 'admin') {
+            $bills = CreateBill::with('customer')
+                ->where('status', 'unassigned')
+                ->get();
+        }
+
+        // Order Booker sees only their relevant unassigned bills
+        elseif ($user->usertype === 'orderbooker') {
+            $userId = $user->user_id;
+
+            $bills = CreateBill::with('customer')
+                ->where('status', 'unassigned')
+                ->where(function ($query) use ($userId) {
+                    $query->where('order_booker_id', $userId)
+                        ->orWhere(function ($q) use ($userId) {
+                            $q->where('assign_type', 'booker')
+                                ->where('assign_user_id', $userId);
+                        });
+                })
+                ->get();
+        }
+
+        // Others get nothing
+        else {
+            $bills = collect();
+        }
 
         return response()->json($bills);
     }
+
 
     public function assignBills(Request $request)
     {

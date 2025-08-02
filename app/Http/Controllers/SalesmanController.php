@@ -22,11 +22,14 @@ class SalesmanController extends Controller
         }
 
         $user = Auth::user();
+        $salesmen = collect(); // default empty collection
 
-        if ($user->usertype === 'admin') {
+        if ($user->usertype === 'admin' || $user->usertype === 'accountant') {
+            // Admin can see all salesmen
             $salesmen = Salesman::with(['city', 'area', 'designationRelation'])->get();
         } elseif ($user->usertype === 'orderbooker') {
-            $userAreas = json_decode($user->area, true); // Booker assigned areas
+            // Booker sees area-wise salesmen
+            $userAreas = json_decode($user->area, true);
 
             $allSalesmen = Salesman::where('designation', 'saleman')
                 ->with(['city', 'area', 'designationRelation'])
@@ -34,15 +37,21 @@ class SalesmanController extends Controller
 
             $salesmen = $allSalesmen->filter(function ($salesman) use ($userAreas) {
                 $salesmanAreas = json_decode($salesman->area, true);
+                return is_array($salesmanAreas) && !empty(array_intersect($userAreas, $salesmanAreas));
+            })->values(); // Reset collection keys
 
-                if (is_array($salesmanAreas)) {
-                    return !empty(array_intersect($userAreas, $salesmanAreas));
-                }
+        } elseif ($user->usertype === 'saleman') {
+            // Saleman sees area-wise bookers
+            $userAreas = json_decode($user->area, true);
 
-                return false;
-            })->values(); // Reset keys
-        } else {
-            $salesmen = collect();
+            $allBookers = Salesman::where('designation', 'orderbooker')
+                ->with(['city', 'area', 'designationRelation'])
+                ->get();
+
+            $salesmen = $allBookers->filter(function ($booker) use ($userAreas) {
+                $bookerAreas = json_decode($booker->area, true);
+                return is_array($bookerAreas) && !empty(array_intersect($userAreas, $bookerAreas));
+            })->values(); // Reset collection keys
         }
 
         $city = City::all();
@@ -50,6 +59,7 @@ class SalesmanController extends Controller
 
         return view('admin_panel.salesmen.add_salesmen', compact('salesmen', 'city', 'designation'));
     }
+
 
 
     // Store Salesman (already correctly handles adding new salesman)

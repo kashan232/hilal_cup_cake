@@ -9,28 +9,28 @@ class HomeController extends Controller
 {
     public function index()
     {
-         if(Auth::id())
-         {
-            $usertype =Auth()->user()->usertype;
+        if (Auth::id()) {
+            $usertype = Auth()->user()->usertype;
             $userId = Auth::id();
-            if($usertype=='orderbooker')
-            {
+            if ($usertype == 'orderbooker') {
                 return view('orderbooker_panel.dashboard', [
                     'userId' => $userId,
                 ]);
-            } 
-             
-            else if($usertype=='admin')
-            {
+            } else if ($usertype == 'saleman') {
+                return view('saleman_panel.dashboard', [
+                    'userId' => $userId,
+                ]);
+            } else if ($usertype == 'accountant') {
+                return view('accountant_panel.dashboard', [
+                    'userId' => $userId,
+                ]);
+            } else if ($usertype == 'admin') {
                 return view('admin_panel.dashboard', [
                     'userId' => $userId,
                 ]);
-            }  
-
-            else
-            {
-                return redirect()->back(); 
+            } else {
+                return redirect()->back();
             }
-         }
+        }
     }
 }

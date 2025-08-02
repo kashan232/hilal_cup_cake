@@ -86,6 +86,36 @@
                 </div>
             </div>
 
+            <!-- Modal -->
+            <!-- Modal -->
+            <div class="modal fade" id="extendDateModal" tabindex="-1" aria-labelledby="extendDateModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <form id="extend-date-form" method="POST" action="{{ route('bills.extendDate') }}">
+                        @csrf
+                        <input type="hidden" name="bill_id" id="modal_bill_id">
+
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Extend Assigned Date</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <label for="current_assigned_date">Current Assigned Date</label>
+                                <input type="text" id="current_assigned_date" class="form-control mb-3" readonly>
+
+                                <label for="new_assigned_date">New Assigned Date</label>
+                                <input type="date" name="new_assigned_date" id="new_assigned_date" class="form-control" required>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Update Date</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+
 
             <div class="card p-4">
                 <div class="card-body">
@@ -175,6 +205,7 @@
 
 
                                     <td>
+                                        @if(Auth::user()->usertype === 'admin')
                                         <a href="javascript:void(0);"
                                             class="btn btn-sm btn-primary text-white edit-bill-btn"
                                             data-id="{{ $bill->id }}"
@@ -193,7 +224,17 @@
                                             Delete
                                         </a>
 
+                                        <a href="javascript:void(0);"
+                                            class="btn btn-sm btn-warning text-white extend-date-btn"
+                                            data-id="{{ $bill->id }}"
+                                            data-current_date="{{ $bill->asigned_date }}">
+                                            Extend Date
+                                        </a>
+                                        @else
+                                        <span class="badge bg-secondary">No Action</span>
+                                        @endif
                                     </td>
+
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -207,6 +248,13 @@
     </div>
 </div>
 @include('admin_panel.include.footer_include')
+<!-- jQuery (required for your jQuery code to work) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Bootstrap 5 JS (already in your code) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
 <script>
     $(document).on('click', '.delete-bill-btn', function() {
         var billId = $(this).data('id');
@@ -255,21 +303,24 @@
         $('#editBillModal').modal('show');
     });
 
-    $('#editBillForm').submit(function(e) {
-        e.preventDefault();
+    $(document).on('click', '.extend-date-btn', function() {
+        const billId = $(this).data('id');
+        const currentDate = $(this).data('current_date');
 
-        $.ajax({
-            url: '{{ route("update-bill") }}',
-            method: 'POST',
-            data: $(this).serialize(),
-            success: function(res) {
-                Swal.fire('Updated!', res.message, 'success');
-                $('#editBillModal').modal('hide');
-                setTimeout(() => location.reload(), 1000);
-            },
-            error: function() {
-                Swal.fire('Error!', 'Update failed!', 'error');
-            }
-        });
+        $('#modal_bill_id').val(billId);
+        $('#new_assigned_date').val(''); // Clear previous entry if any
+        $('#current_assigned_date').val(currentDate); // <-- Show current assigned date
+
+        $('#extendDateModal').modal('show');
     });
+
+    function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    if (!isNaN(date)) {
+        return date.toLocaleDateString('en-GB'); // dd/mm/yyyy
+    }
+    return dateStr; // fallback
+}
+
+$('#current_assigned_date').val(formatDate(currentDate));
 </script>

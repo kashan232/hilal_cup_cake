@@ -7,9 +7,27 @@
             <div class="content">
                 <div class="page-header">
                     <div class="page-title">
-                        <h4>Staff Management List</h4>
-                        <h6>Manage Staff Management</h6>
+                        <h4>
+                            @if(Auth::user()->usertype === 'admin')
+                            Staff Management List
+                            @elseif(Auth::user()->usertype === 'orderbooker')
+                            Manage Salesmen
+                            @elseif(Auth::user()->usertype === 'saleman')
+                            Order Bookers
+                            @endif
+                        </h4>
+
+                        <h6>
+                            @if(Auth::user()->usertype === 'admin')
+                            Manage Staff Management
+                            @elseif(Auth::user()->usertype === 'orderbooker')
+                            Area-wise assigned salesmen
+                            @elseif(Auth::user()->usertype === 'saleman')
+                            Area-wise assigned order bookers
+                            @endif
+                        </h6>
                     </div>
+
                     <div class="page-btn">
                         @if(Auth::user()->usertype === 'admin')
                         <button class="btn btn-added" data-bs-toggle="modal" data-bs-target="#addSalesmanModal">

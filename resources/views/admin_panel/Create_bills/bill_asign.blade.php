@@ -24,11 +24,19 @@
                         <div class="row mb-4">
                             <div class="col-md-3">
                                 <label for="assign_to" class="form-label">Assign To</label>
+                                @if(Auth::check() && Auth::user()->usertype == 'admin')
                                 <select class="form-select" id="assign_to" name="assign_to">
                                     <option value="" disabled selected>-- Select Role --</option>
                                     <option value="booker">Booker</option>
                                     <option value="salesman">Salesman</option>
                                 </select>
+                                @elseif(Auth::check() && Auth::user()->usertype == 'orderbooker')
+                                <select class="form-select" id="assign_to" name="assign_to">
+                                    <option value="" disabled selected>-- Select Role --</option>
+                                    <option value="salesman">Salesman</option>
+                                </select>
+                                @endif
+
                             </div>
 
                             <div class="col-md-3">

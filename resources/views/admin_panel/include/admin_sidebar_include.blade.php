@@ -196,11 +196,92 @@
                             <li><a href="{{ route('customer-payments') }}">Customer Payments </a></li>
                         </ul>
                     </li>
+
+                    <li class="submenu">
+                        <a href="javascript:void(0);"><i class="fas fa-address-book"></i><span> Bills Asigns</span> <span class="menu-arrow"></span></a>
+                        <ul>
+                            <li><a href="{{ route('bill-asign') }}">Bills Asigns </a></li>
+                        </ul>
+                    </li>
+
                 </ul>
                 @endif
+                @if(Auth::check() && Auth::user()->usertype == 'saleman')
+                @php
+                $user = Auth::user();
+                $userId = $user->user_id;
 
+                $overdueBillsCount = 0;
 
+                if ($user->usertype === 'saleman') {
+                $overdueBillsCount = \App\Models\CreateBill::where('assign_type', 'salesman')
+                ->where('assign_user_id', $userId)
+                ->where('payment_status', '!=', 'paid')
+                ->whereDate('asigned_date', '<', \Carbon\Carbon::today()->subDays(5))
+                    ->count();
+                    }
+                    @endphp
+                    <ul>
+                        <li class="active">
+                            <a href="{{ route('home') }}"><i class="fas fa-home"></i><span> Dashboard</span> </a>
+                        </li>
 
+                        <li class="submenu">
+                            <a href="javascript:void(0);">
+                                <i class="fas fa-user-tie"></i>
+                                <span>Order Bookers</span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <ul>
+                                <li><a href="{{ route('salesmen') }}">Order Bookers</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="submenu">
+                            <a href="javascript:void(0);">
+                                <i class="fas fa-address-book"></i>
+                                <span>Bookers Bills</span>
+                                <span class="menu-arrow"></span>
+                                @if($overdueBillsCount > 0)
+                                <span class="badge bg-danger ms-2 text-white">{{ $overdueBillsCount }}</span>
+                                @endif
+                            </a>
+                            <ul>
+                                <li><a href="{{ route('bills') }}"> Bills </a></li>
+                            </ul>
+                        </li>
+
+                    </ul>
+                    @endif
+                    @if(Auth::check() && Auth::user()->usertype == 'accountant')
+                    <ul>
+                        <li class="active">
+                            <a href="{{ route('home') }}"><i class="fas fa-home"></i><span> Dashboard</span> </a>
+                        </li>
+
+                        <li class="submenu">
+                            <a href="javascript:void(0);">
+                                <i class="fas fa-user-tie"></i>
+                                <span>Bookers & Salemans</span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <ul>
+                                <li><a href="{{ route('salesmen') }}">Bookers & Salemans</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="submenu">
+                            <a href="javascript:void(0);">
+                                <i class="fas fa-address-book"></i>
+                                <span> Bills</span>
+                            </a>
+                            <ul>
+                                <li><a href="{{ route('bills') }}"> Bills </a></li>
+                            </ul>
+                        </li>
+
+                    </ul>
+                    @endif
         </div>
     </div>
 </div>

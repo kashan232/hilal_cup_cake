@@ -54,6 +54,8 @@ Route::get('/customer-ledger-info/{id}', [CreateBillController::class, 'getCusto
 Route::get('/bills', [CreateBillController::class, 'bills'])->name('bills');
 Route::post('/delete-bill', [CreateBillController::class, 'deleteBill'])->name('delete-bill');
 Route::post('/update-bill', [CreateBillController::class, 'updateBill'])->name('update-bill');
+Route::post('/bills/extend-date', [CreateBillController::class, 'extendAssignedDate'])->name('bills.extendDate');
+
 
 Route::get('/bill-asign', [CreateBillController::class, 'bill_asign'])->name('bill-asign');
 Route::post('/fetch-users-by-role', [CreateBillController::class, 'fetchUsersByRole'])->name('fetch-users-by-role');
