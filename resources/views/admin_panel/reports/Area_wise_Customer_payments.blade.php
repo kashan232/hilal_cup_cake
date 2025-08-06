@@ -36,7 +36,7 @@
         <div class="content">
             <div class="card p-4 shadow-lg">
                 <div class="card-body">
-                    <h3 class="text-center fw-bold text-primary">RECEIVABLE REPORT</h3>
+                    <h3 class="text-center fw-bold text-primary">MARKET CREDIT REPORT</h3>
 
                     <form id="ledgerSearchForm">
                         @csrf
@@ -173,8 +173,6 @@
                                         <th>Address</th>
                                         <th>Contact</th>
                                         <th>Balance</th>
-                                        <th>Cash Rec</th>
-                                        <th>Remarks</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -189,8 +187,6 @@
                                     <td>${c.address}</td>
                                     <td>${c.contact}</td>
                                     <td>${parseFloat(c.balance).toLocaleString()}</td>
-                                    <td>${c.cash_rec ? parseFloat(c.cash_rec).toLocaleString() : ''}</td>
-                                    <td>${c.remarks ?? ''}</td>
                                 </tr>
                             `;
                         });
@@ -199,7 +195,6 @@
                             <tr class="summary-row">
                                 <td colspan="4">Total Count: ${customers.length}</td>
                                 <td>${totalBalance.toLocaleString()}</td>
-                                <td colspan="2"></td>
                             </tr>
                             </tbody></table>
                         `;

@@ -122,12 +122,14 @@ class PaymentController extends Controller
     public function storeCustomerPayment(Request $request)
     {
         $request->validate([
-            'customer_id'     => 'required|exists:customers,id',
-            'ordbker_id'      => 'required|exists:users,id',
-            'payment_date'    => 'required|date',
-            'payment_method'  => 'nullable|string',
-            'bill_ids'        => 'nullable|array',
-            'amount_received' => 'nullable|array',
+            'customer_id'        => 'required|exists:customers,id',
+            'ordbker_id'         => 'required|exists:users,id',
+            'payment_date'       => 'required|date',
+            'payment_method'     => 'nullable|string',
+            'bill_ids'           => 'nullable|array',
+            'amount_received'    => 'nullable|array',
+            'difference_amount'  => 'nullable|array',
+            'difference_reason'  => 'nullable|array',
         ]);
 
         $latestLedger = CustomerLedger::where('customer_id', $request->customer_id)
@@ -143,7 +145,9 @@ class PaymentController extends Controller
 
         if ($request->has('bill_ids') && is_array($request->bill_ids)) {
             foreach ($request->bill_ids as $bill_id) {
-                $amount_paid_total += floatval($request->amount_received[$bill_id] ?? 0);
+                $received = floatval($request->amount_received[$bill_id] ?? 0);
+                $difference = floatval($request->difference_amount[$bill_id] ?? 0);
+                $amount_paid_total += ($received + $difference);
             }
         }
 
@@ -156,6 +160,20 @@ class PaymentController extends Controller
             'closing_balance'   => $new_closing_balance,
         ]);
 
+        // Optional: storing reasons with amounts per bill
+        $differenceDetails = [];
+        if ($request->has('difference_amount')) {
+            foreach ($request->difference_amount as $billId => $amount) {
+                if ($amount > 0 || !empty($request->difference_reason[$billId])) {
+                    $differenceDetails[] = [
+                        'bill_id' => $billId,
+                        'amount' => floatval($amount),
+                        'reason' => $request->difference_reason[$billId] ?? '',
+                    ];
+                }
+            }
+        }
+
         $recovery = CustomerRecovery::create([
             'admin_or_user_id'     => auth()->id(),
             'customer_ledger_id'   => $latestLedger->id,
@@ -163,25 +181,20 @@ class PaymentController extends Controller
             'salesman'             => $request->ordbker_id,
             'date'                 => $request->payment_date,
             'remarks'              => $request->payment_method,
+            'difference_details'   => !empty($differenceDetails) ? json_encode($differenceDetails) : null,
         ]);
 
         if ($request->has('bill_ids') && is_array($request->bill_ids)) {
             foreach ($request->bill_ids as $bill_id) {
                 $bill = CreateBill::find($bill_id);
-
                 if (!$bill) continue;
 
-                $amount_received_for_bill = floatval($request->amount_received[$bill_id] ?? 0);
-                $previous_remaining = $bill->remaining_amount !== null
-                    ? $bill->remaining_amount
-                    : $bill->amount;
+                $received = floatval($request->amount_received[$bill_id] ?? 0);
+                $difference = floatval($request->difference_amount[$bill_id] ?? 0);
+                $total_paid = $received + $difference;
 
-                // Avoid overpayment
-                if ($amount_received_for_bill > $previous_remaining) {
-                    $amount_received_for_bill = $previous_remaining;
-                }
-
-                $new_remaining = max($previous_remaining - $amount_received_for_bill, 0);
+                $previous_remaining = $bill->remaining_amount ?? $bill->amount;
+                $new_remaining = max($previous_remaining - $total_paid, 0);
 
                 if ($new_remaining <= 0) {
                     $payment_status = 'Paid';
@@ -201,6 +214,7 @@ class PaymentController extends Controller
 
         return redirect()->back()->with('success', 'Payment recorded and bills updated successfully.');
     }
+
 
 
 

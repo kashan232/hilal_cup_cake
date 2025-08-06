@@ -110,7 +110,12 @@ class CustomerController extends Controller
     {
         if (Auth::id()) {
             $userId = Auth::id();
-            $Recoveries = CustomerRecovery::where('admin_or_user_id', $userId)->with('customer')->get();
+
+            $Recoveries = CustomerRecovery::where('admin_or_user_id', $userId)
+                ->with('customer')
+                ->orderBy('id', 'desc') // Sort by latest ID
+                ->get();
+
             return view('admin_panel.customer.customer_recovery', compact('Recoveries'));
         } else {
             return redirect()->back();

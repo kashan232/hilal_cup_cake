@@ -128,20 +128,14 @@
                     </ul>
                 </li>
 
-                <!-- <li class="submenu">
+                <li class="submenu">
                     <a href="javascript:void(0);"><i class="fas fa-chart-pie"></i><span>Reporting</span> <span class="menu-arrow"></span></a>
                     <ul>
-                        <li><a href="{{ route('stock-Record') }}">Item Stock Report </a></li>
-                        <li><a href="{{ route('Distributor-Ledger-Record') }}">Distributor Ledger Record </a></li>
-                        <li><a href="{{ route('vendor-Ledger-Record') }}">Vendor Ledger Record </a></li>
                         <li><a href="{{ route('Customer-Ledger-Record') }}">Customer Ledger Record </a></li>
                         <li><a href="{{ route('date-wise-recovery-report') }}">Date Wise Recovery Report </a></li>
-                        <li><a href="{{ route('date-wise-purcahse-report') }}">Date wise Purchase Report </a></li>
-                        <li><a href="{{ route('vendor-wise-purcahse-report') }}">Vendor wise Purchase Report </a></li>
                         <li><a href="{{ route('Area-wise-Customer-payments') }}">Area wise Customer Report </a></li>
-
                     </ul>
-                </li> -->
+                </li>
             </ul>
             @endif
 

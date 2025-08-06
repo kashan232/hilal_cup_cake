@@ -132,6 +132,7 @@
                                     <th>Salesman</th>
                                     <th>Status</th>
                                     <th>Assigned & Date</th>
+                                    <th>Bill Aging</th>
                                     <th>Payment Status</th>
                                     <th>Action</th>
                                 </tr>
@@ -139,104 +140,112 @@
                             <tbody>
                                 @foreach($bills as $index => $bill)
                                 @php
-                                $status = strtolower($bill->payment_status);
-                                $assignedDate = $bill->asigned_date ? \Carbon\Carbon::parse($bill->asigned_date) : null;
-                                $now = \Carbon\Carbon::now();
-                                $daysPassed = $assignedDate ? $assignedDate->diffInDays($now) : 0;
-                                $showAlert = $bill->status === 'assigned' && $status !== 'paid' && $daysPassed >= 5;
-                                $rowBg = $showAlert ? 'style=background-color:#ffcccc;' : '';
-                                @endphp
-                                <tr {!! $rowBg !!}>
-                                    <td>{{ $index + 1 }}</td>
-                                    <td>{{ $bill->customer->customer_name ?? 'N/A' }}</td>
-                                    <td>{{ $bill->invoice_number }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($bill->date)->format('d-m-Y') }}</td>
-                                    <td>
-                                        Rs. {{ number_format($bill->amount, 2) }}
-                                    </td>
-                                    <td>{{ $bill->orderBooker->name ?? 'N/A' }}</td>
-                                    <td>{{ $bill->salesman->name ?? 'N/A' }}</td>
-                                    <!-- Status Badge -->
-                                    <td>
-                                        <span class="badge p-2 {{ $bill->status == 'unassigned' ? 'bg-dark' : 'bg-success' }}">
-                                            {{ ucfirst($bill->status) }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        @if($bill->assign_type && $bill->assign_user_id)
-                                        <span class="badge bg-info">
-                                            {{ ucfirst($bill->assign_type) }} - {{ $bill->assignUser->name ?? 'Unknown' }}
+                                    $status = strtolower($bill->payment_status);
+                                    $billDate = $bill->date ? \Carbon\Carbon::parse($bill->date) : null; // <-- Changed here
+                                    $now=\Carbon\Carbon::now();
+                                    $daysPassed=$billDate ? $billDate->diffInDays($now) : null;
+                                    $showAlert = $bill->status === 'assigned' && $status !== 'paid' && $daysPassed >= 5;
+                                    $rowBg = $showAlert ? 'style=background-color:#ffcccc;' : '';
+                                    @endphp
+                                    <tr {!! $rowBg !!}>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ $bill->customer->customer_name ?? 'N/A' }}</td>
+                                        <td>{{ $bill->invoice_number }}</td>
+                                        <td>{{ \Carbon\Carbon::parse($bill->date)->format('d-m-Y') }}</td>
+                                        <td>
+                                            Rs. {{ number_format($bill->amount, 2) }}
+                                        </td>
+                                        <td>{{ $bill->orderBooker->name ?? 'N/A' }}</td>
+                                        <td>{{ $bill->salesman->name ?? 'N/A' }}</td>
+                                        <!-- Status Badge -->
+                                        <td>
+                                            <span class="badge p-2 {{ $bill->status == 'unassigned' ? 'bg-dark' : 'bg-success' }}">
+                                                {{ ucfirst($bill->status) }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @if($bill->assign_type && $bill->assign_user_id)
+                                            <span class="badge bg-info">
+                                                {{ ucfirst($bill->assign_type) }} - {{ $bill->assignUser->name ?? 'Unknown' }}
+                                                <br>
+                                            </span>
                                             <br>
-                                        </span>
-                                        <br>
-                                        <span>{{ \Carbon\Carbon::parse($bill->asigned_date)->format('d M Y') }}</span>
-                                        @else
-                                        <span class="badge bg-secondary">Not Assigned</span>
-                                        @endif
-                                    </td>
+                                            <span>{{ \Carbon\Carbon::parse($bill->asigned_date)->format('d M Y') }}</span>
+                                            @else
+                                            <span class="badge bg-secondary">Not Assigned</span>
+                                            @endif
+                                        </td>
+
+                                        <td>
+                                            @if($billDate)
+                                            <span class="badge bg-danger text-white p-2">
+                                                {{ $daysPassed }} {{ Str::plural('day', $daysPassed) }}
+                                            </span>
+                                            @else
+                                            <span class="text-muted">N/A</span>
+                                            @endif
+                                        </td>
+                                        <!-- Payment Status Badge -->
+                                        <!-- Payment Status Badge with Remaining Amount -->
+                                        <td>
+                                            @php
+                                            $paymentStatus = $bill->payment_status;
+
+                                            $colorClass = $paymentStatus === 'Paid' ? 'bg-success text-white'
+                                            : ($paymentStatus === 'Partially Paid' ? 'bg-warning text-dark' : 'bg-danger text-white');
+                                            @endphp
+
+                                            <span class="badge p-2 {{ $colorClass }}">
+                                                {{ $paymentStatus }}
+                                            </span>
+
+                                            @if($paymentStatus !== 'Paid')
+                                            <div class="text-muted small mt-1">
+                                                Remaining: Rs. {{ $bill->remaining_amount }}
+                                            </div>
+                                            @endif
+
+                                            @if($showAlert)
+                                            <div class="mt-1 text-danger fw-bold blink">
+                                                ⚠ Payment Overdue!
+                                            </div>
+                                            @endif
+                                        </td>
 
 
-                                    <!-- Payment Status Badge -->
-                                    <!-- Payment Status Badge with Remaining Amount -->
-                                    <td>
-                                        @php
-                                        $paymentStatus = $bill->payment_status;
+                                        <td>
+                                            @if(Auth::user()->usertype === 'admin')
+                                            <a href="javascript:void(0);"
+                                                class="btn btn-sm btn-primary text-white edit-bill-btn"
+                                                data-id="{{ $bill->id }}"
+                                                data-customer_id="{{ $bill->customer_id }}"
+                                                data-invoice_number="{{ $bill->invoice_number }}"
+                                                data-date="{{ $bill->date }}"
+                                                data-amount="{{ $bill->amount }}"
+                                                data-order_booker_id="{{ $bill->order_booker_id }}"
+                                                data-salesman_id="{{ $bill->salesman_id }}">
+                                                Edit
+                                            </a>
 
-                                        $colorClass = $paymentStatus === 'Paid' ? 'bg-success text-white'
-                                        : ($paymentStatus === 'Partially Paid' ? 'bg-warning text-dark' : 'bg-danger text-white');
-                                        @endphp
+                                            <a href="javascript:void(0);"
+                                                class="btn btn-sm btn-danger text-white delete-bill-btn"
+                                                data-id="{{ $bill->id }}">
+                                                Delete
+                                            </a>
 
-                                        <span class="badge p-2 {{ $colorClass }}">
-                                            {{ $paymentStatus }}
-                                        </span>
+                                            <a href="javascript:void(0);"
+                                                class="btn btn-sm btn-warning text-white extend-date-btn"
+                                                data-id="{{ $bill->id }}"
+                                                data-current_date="{{ $bill->asigned_date }}">
+                                                Extend Date
+                                            </a>
+                                            @else
+                                            <span class="badge bg-secondary">No Action</span>
+                                            @endif
+                                        </td>
 
-                                        @if($paymentStatus !== 'Paid')
-                                        <div class="text-muted small mt-1">
-                                            Remaining: Rs. {{ $bill->remaining_amount }}
-                                        </div>
-                                        @endif
-
-                                        @if($showAlert)
-                                        <div class="mt-1 text-danger fw-bold blink">
-                                            ⚠ Payment Overdue!
-                                        </div>
-                                        @endif
-                                    </td>
-
-
-                                    <td>
-                                        @if(Auth::user()->usertype === 'admin')
-                                        <a href="javascript:void(0);"
-                                            class="btn btn-sm btn-primary text-white edit-bill-btn"
-                                            data-id="{{ $bill->id }}"
-                                            data-customer_id="{{ $bill->customer_id }}"
-                                            data-invoice_number="{{ $bill->invoice_number }}"
-                                            data-date="{{ $bill->date }}"
-                                            data-amount="{{ $bill->amount }}"
-                                            data-order_booker_id="{{ $bill->order_booker_id }}"
-                                            data-salesman_id="{{ $bill->salesman_id }}">
-                                            Edit
-                                        </a>
-
-                                        <a href="javascript:void(0);"
-                                            class="btn btn-sm btn-danger text-white delete-bill-btn"
-                                            data-id="{{ $bill->id }}">
-                                            Delete
-                                        </a>
-
-                                        <a href="javascript:void(0);"
-                                            class="btn btn-sm btn-warning text-white extend-date-btn"
-                                            data-id="{{ $bill->id }}"
-                                            data-current_date="{{ $bill->asigned_date }}">
-                                            Extend Date
-                                        </a>
-                                        @else
-                                        <span class="badge bg-secondary">No Action</span>
-                                        @endif
-                                    </td>
-
-                                </tr>
-                                @endforeach
+                                    </tr>
+                                    @endforeach
                             </tbody>
                         </table>
 
@@ -249,7 +258,6 @@
 </div>
 @include('admin_panel.include.footer_include')
 <!-- jQuery (required for your jQuery code to work) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <!-- Bootstrap 5 JS (already in your code) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -315,12 +323,12 @@
     });
 
     function formatDate(dateStr) {
-    const date = new Date(dateStr);
-    if (!isNaN(date)) {
-        return date.toLocaleDateString('en-GB'); // dd/mm/yyyy
+        const date = new Date(dateStr);
+        if (!isNaN(date)) {
+            return date.toLocaleDateString('en-GB'); // dd/mm/yyyy
+        }
+        return dateStr; // fallback
     }
-    return dateStr; // fallback
-}
 
-$('#current_assigned_date').val(formatDate(currentDate));
+    $('#current_assigned_date').val(formatDate(currentDate));
 </script>

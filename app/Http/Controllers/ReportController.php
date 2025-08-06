@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\City;
 use App\Models\Customer;
+use App\Models\CustomerLedger;
 use App\Models\CustomerRecovery;
 use App\Models\Distributor;
 use App\Models\LocalSale;
@@ -191,45 +192,40 @@ class ReportController extends Controller
     public function fetchCustomerledger(Request $request)
     {
         $CustomerId = $request->input('Customer_id');
-        $startDate = $request->input('start_date'); // User selected Start Date
+        $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        // Get ledger record
+        // Get ledger
         $ledger = DB::table('customer_ledgers')
             ->where('customer_id', $CustomerId)
-            ->select('opening_balance', 'previous_balance', 'closing_balance')
+            ->select('id', 'customer_id', 'opening_balance', 'previous_balance', 'closing_balance')
             ->first();
 
-        // Get recoveries
+        $ledgerId = $ledger->id ?? null;
+
+        // Recoveries
         $recoveries = DB::table('customer_recoveries')
-            ->where('customer_ledger_id', $CustomerId)
+            ->where('customer_ledger_id', $ledgerId)
             ->whereBetween('date', [$startDate, $endDate])
             ->select('id', 'amount_paid', 'salesman', 'date', 'remarks')
             ->get();
 
-
-        // Get Local Sales
-        $localSales = DB::table('local_sales')
-            ->where('customer_id', $CustomerId)
-            ->whereBetween('Date', [$startDate, $endDate])
+        // ✅ Bills with names
+        $bills = DB::table('create_bills')
+            ->leftJoin('sales_mens as ob', 'create_bills.order_booker_id', '=', 'ob.id')
+            ->leftJoin('sales_mens as sm', 'create_bills.salesman_id', '=', 'sm.id')
+            ->where('create_bills.customer_id', $CustomerId)
+            ->whereBetween('create_bills.date', [$startDate, $endDate])
             ->select(
-                'invoice_number',
-                'Date',
-                'customer_shopname',
-                'grand_total',
-                'discount_value',
-                'scheme_value',
-                'net_amount',
-                'Saleman'
+                'create_bills.invoice_number',
+                'create_bills.date',
+                'create_bills.amount',
+                'create_bills.status',
+                'create_bills.payment_status',
+                'create_bills.remaining_amount',
+                'ob.name as order_booker_name',
+                'sm.name as salesman_name'
             )
-            ->get();
-
-
-        $saleReturns = DB::table('sale_returns')
-            ->where('sale_type', 'customer')
-            ->where('party_id', $CustomerId)
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->select('invoice_number', 'total_return_amount', 'created_at')
             ->get();
 
         return response()->json([
@@ -237,12 +233,13 @@ class ReportController extends Controller
             'previous_balance' => $ledger->previous_balance ?? 0,
             'closing_balance' => $ledger->closing_balance ?? 0,
             'recoveries' => $recoveries,
-            'local_sales' => $localSales, // Local Sales Data
-            'sale_returns' => $saleReturns,
-            'startDate' => $startDate, // Local Sales Data
-            'endDate' => $endDate, // Local Sales Data
+            'bills' => $bills,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
         ]);
     }
+
+
 
 
     public function stock_Record()
@@ -409,13 +406,13 @@ class ReportController extends Controller
             $userId = Auth::id();
             $Customers = Customer::where('admin_or_user_id', $userId)->get(); // Adjust according to your database structure
 
-            $Salesmans = Salesman::where('admin_or_user_id', $userId)
-                ->where('designation', 'Saleman')
+            $orderbookers = Salesman::where('admin_or_user_id', $userId)
+                ->where('designation', 'orderbooker')
                 ->get();
 
             return view('admin_panel.reports.date_wise_recovery_report', [
                 'Customers' => $Customers,
-                'Salesmans' => $Salesmans,
+                'orderbookers' => $orderbookers,
             ]);
         } else {
             return redirect()->back();
@@ -425,60 +422,44 @@ class ReportController extends Controller
     public function getRecoveryReport(Request $request)
     {
         $salesman = $request->salesman;
-        $type = $request->type;
         $startDate = $request->start_date;
         $endDate = $request->end_date;
 
         $recoveries = [];
 
-        if ($type == 'all' || $type == 'distributor') {
-            $query = Recovery::whereBetween('date', [$startDate, $endDate]);
+        $query = CustomerRecovery::whereBetween('date', [$startDate, $endDate]);
 
-            if ($salesman !== 'All') {
-                $query->where('salesman', $salesman);
-            }
-
-            $distributorRecoveries = $query->get();
-
-            foreach ($distributorRecoveries as $recovery) {
-                $distributor = Distributor::find($recovery->distributor_ledger_id);
-                $recoveries[] = [
-                    'date' => $recovery->date,
-                    'party_name' => $distributor->Customer ?? 'N/A',
-                    'area' => $distributor->Area ?? 'N/A',
-                    'remarks' => $recovery->remarks,
-                    'amount_paid' => number_format($recovery->amount_paid),
-                    'salesman' => $recovery->salesman ?? '-'
-                ];
-            }
+        // Filter by specific salesman if not All
+        if ($salesman !== 'All') {
+            $query->where('salesman', $salesman);
         }
 
-        if ($type == 'all' || $type == 'customer') {
-            $query = CustomerRecovery::whereBetween('date', [$startDate, $endDate]);
+        $customerRecoveries = $query->get();
 
-            if ($salesman !== 'All') {
-                $query->where('salesman', $salesman);
-            }
+        foreach ($customerRecoveries as $recovery) {
+            $ledger = CustomerLedger::find($recovery->customer_ledger_id);
 
-            $customerRecoveries = $query->get();
+            if (!$ledger) continue;
 
-            foreach ($customerRecoveries as $recovery) {
-                $customer = Customer::find($recovery->customer_ledger_id);
-                $recoveries[] = [
-                    'date' => $recovery->date,
-                    'party_name' => $customer->customer_name ?? 'N/A',
-                    'area' => $customer->area ?? 'N/A',
-                    'remarks' => $recovery->remarks,
-                    'amount_paid' => number_format($recovery->amount_paid),
-                    'salesman' => $recovery->salesman ?? '-'
-                ];
-            }
+            $customer = Customer::find($ledger->customer_id);
+
+            // Booker fetch karo har recovery ke salesman id se
+            $booker = Salesman::find($recovery->salesman);
+
+            $bookerName = ($booker && $booker->designation === 'orderbooker') ? $booker->name : '-';
+
+            $recoveries[] = [
+                'date' => $recovery->date,
+                'party_name' => $customer->customer_name ?? 'N/A',
+                'area' => $customer->area ?? 'N/A',
+                'remarks' => $recovery->remarks,
+                'amount_paid' => number_format($recovery->amount_paid),
+                'salesman' => $bookerName,
+            ];
         }
 
         return response()->json($recoveries);
     }
-
-
     public function date_wise_purcahse_report()
     {
         if (Auth::id()) {
@@ -656,7 +637,7 @@ class ReportController extends Controller
         $reportData = [];
 
         foreach ($customers as $customer) {
-            // Step 1: Get opening balance
+            // Step 1: Get opening balance from ledger
             $ledger = DB::table('customer_ledgers')
                 ->where('customer_id', $customer->id)
                 ->select('opening_balance')
@@ -664,27 +645,26 @@ class ReportController extends Controller
 
             $openingBalance = $ledger->opening_balance ?? 0;
 
-            // Step 2: Get total sales in selected date range
-            $totalSales = DB::table('local_sales')
+            // Step 2: Get total billed amount from create_bills (replace local_sales)
+            $totalBilled = DB::table('create_bills')
                 ->where('customer_id', $customer->id)
-                ->whereBetween('Date', [$startDate, $endDate])
-                ->sum('grand_total');
+                ->whereBetween('date', [$startDate, $endDate])
+                ->sum('amount');
 
-            // Step 3: Get sale returns in selected date range
-            $totalReturns = DB::table('sale_returns')
-                ->where('sale_type', 'customer')
-                ->where('party_id', $customer->id)
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->sum('total_return_amount');
+            // Step 3: REMOVE sale returns logic
 
-            // Step 4: Get recoveries in selected date range
+            // Step 4: Get total recoveries
+            $ledgerIds = DB::table('customer_ledgers')
+                ->where('customer_id', $customer->id)
+                ->pluck('id');
+
             $totalRecoveries = DB::table('customer_recoveries')
-                ->where('customer_ledger_id', $customer->id)
+                ->whereIn('customer_ledger_id', $ledgerIds)
                 ->whereBetween('date', [$startDate, $endDate])
                 ->sum('amount_paid');
 
             // Step 5: Final balance
-            $balance = ($openingBalance + $totalSales - $totalReturns) - $totalRecoveries;
+            $balance = ($openingBalance + $totalBilled) - $totalRecoveries;
 
             $reportData[] = [
                 'pcode' => $customer->id,
@@ -692,8 +672,6 @@ class ReportController extends Controller
                 'address' => $customer->area,
                 'contact' => $customer->phone_number,
                 'balance' => round($balance, 2),
-                'cash_rec' => '',
-                'remarks' => '', // Optional
             ];
         }
 

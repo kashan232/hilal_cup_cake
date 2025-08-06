@@ -150,27 +150,22 @@
         border: 1px solid black;
     }
 </style>
-
 <script>
     function formatDate(dateString) {
         const date = new Date(dateString);
         const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+        const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
         return `${day}/${month}/${year}`;
     }
 
     $(document).ready(function() {
-
-
         $('#Customer').change(function() {
             var selected = $(this).find(':selected');
             $('#contact').val(selected.data('contact'));
             $('#city').val(selected.data('city'));
             $('#area').val(selected.data('area'));
         });
-
-
 
         $('#searchLedger').click(function() {
             var CustomerId = $('#Customer').val();
@@ -191,14 +186,11 @@
                     end_date: endDate
                 },
                 success: function(response) {
-                    const startDateObj = new Date(response.startDate);
-                    const endDateObj = new Date(response.endDate);
-                    // Format dates to 'dd/mm/yyyy'
                     const formattedStartDate = formatDate(response.startDate);
                     const formattedEndDate = formatDate(response.endDate);
 
                     $('#ledgerResult').show();
-                    $('#CustomerName').text($('#Customer option:selected').text()); // Customer name show karein
+                    $('#CustomerName').text($('#Customer option:selected').text());
                     $('#startDate').text(formattedStartDate || "N/A");
                     $('#endDate').text(formattedEndDate || "N/A");
 
@@ -210,26 +202,27 @@
 
                     let allEntries = [];
 
-                    // ✅ Opening Balance Entry
+                    // ✅ Opening Balance
                     ledgerHTML += `
-                <tr>
-                    <td>${response.start_date || "N/A"}</td>
-                    <td>-</td>
-                    <td class="fw-bold">Opening Balance</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td class="fw-bold text-primary">Rs. ${balance.toFixed(2)}</td>
-                </tr>
-            `;
+                        <tr>
+                            <td>${response.startDate || "N/A"}</td>
+                            <td>-</td>
+                            <td class="fw-bold">Opening Balance</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td class="fw-bold text-primary">Rs. ${balance.toFixed(2)}</td>
+                        </tr>
+                    `;
 
-                    // ✅ Sales Entries (local_sales)
-                    response.local_sales.forEach(entry => {
+                    // ✅ Bills Entries
+                    response.bills.forEach(entry => {
                         allEntries.push({
-                            date: entry.Date,
+                            date: entry.date,
                             type: 'sale',
                             invoice_number: entry.invoice_number,
-                            salesman: entry.Saleman,
-                            amount: parseFloat(entry.net_amount) || 0
+                            amount: parseFloat(entry.amount) || 0,
+                            order_booker_name: entry.order_booker_name,
+                            salesman_name: entry.salesman_name
                         });
                     });
 
@@ -244,16 +237,19 @@
                         });
                     });
 
-                    response.sale_returns.forEach(entry => {
-                        allEntries.push({
-                            date: entry.created_at,
-                            type: 'sale_return',
-                            invoice_number: entry.invoice_number,
-                            amount: parseFloat(entry.total_return_amount) || 0
+                    // (Optional) If you still use sale_returns
+                    if (response.sale_returns) {
+                        response.sale_returns.forEach(entry => {
+                            allEntries.push({
+                                date: entry.created_at,
+                                type: 'sale_return',
+                                invoice_number: entry.invoice_number,
+                                amount: parseFloat(entry.total_return_amount) || 0
+                            });
                         });
-                    });
+                    }
 
-                    // ✅ Sort Entries by Date (Sales pehle, Recovery baad me agar date same ho)
+                    // ✅ Sort by Date & Priority
                     allEntries.sort((a, b) => {
                         let dateA = new Date(a.date);
                         let dateB = new Date(b.date);
@@ -268,54 +264,57 @@
                         return dateA - dateB;
                     });
 
-                    // ✅ Maintain Correct Ledger Balance
+                    // ✅ Build Ledger Entries
                     allEntries.forEach(entry => {
                         if (entry.type === 'sale') {
                             let debit = entry.amount;
                             totalDebit += debit;
                             balance += debit;
+
                             ledgerHTML += `
-            <tr>
-                <td>${formatDate(entry.date)}</td>
-                <td>${entry.invoice_number}</td>
-                <td>To Sale A/c (${entry.salesman})</td>
-                <td>Rs. ${debit.toFixed(2)}</td>
-                <td>-</td>
-                <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
-            </tr>
-        `;
+                                <tr>
+                                    <td>${formatDate(entry.date)}</td>
+                                    <td>${entry.invoice_number}</td>
+                                    <td>To Bill (${entry.order_booker_name} / ${entry.salesman_name})</td>
+                                    <td>Rs. ${debit.toFixed(2)}</td>
+                                    <td>-</td>
+                                    <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
+                                </tr>
+                            `;
                         } else if (entry.type === 'recovery') {
                             let credit = entry.amount;
                             totalCredit += credit;
                             balance -= credit;
+
                             ledgerHTML += `
-            <tr>
-                <td>${formatDate(entry.date)}</td>
-                <td>-</td>
-                <td> ${entry.remarks} </td>
-                <td>-</td>
-                <td>Rs. ${credit.toFixed(2)}</td>
-                <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
-            </tr>
-        `;
+                                <tr>
+                                    <td>${formatDate(entry.date)}</td>
+                                    <td>-</td>
+                                    <td>${entry.remarks || 'Recovery'}</td>
+                                    <td>-</td>
+                                    <td>Rs. ${credit.toFixed(2)}</td>
+                                    <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
+                                </tr>
+                            `;
                         } else if (entry.type === 'sale_return') {
                             let credit = entry.amount;
                             totalCredit += credit;
                             balance -= credit;
+
                             ledgerHTML += `
-        <tr>
-            <td>${formatDate(entry.date)}</td>
-            <td>${entry.invoice_number}</td>
-            <td class="text-danger fw-bold">Sale Return</td>
-            <td>-</td>
-            <td class="text-danger fw-bold">Rs. ${credit.toFixed(2)}</td>
-            <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
-        </tr>
-    `;
+                                <tr>
+                                    <td>${formatDate(entry.date)}</td>
+                                    <td>${entry.invoice_number}</td>
+                                    <td class="text-danger fw-bold">Sale Return</td>
+                                    <td>-</td>
+                                    <td class="text-danger fw-bold">Rs. ${credit.toFixed(2)}</td>
+                                    <td class="fw-bold ${balance < 0 ? 'text-danger' : 'text-success'}">Rs. ${balance.toFixed(2)}</td>
+                                </tr>
+                            `;
                         }
                     });
 
-                    // ✅ Update Totals
+                    // ✅ Inject into DOM
                     $('#ledgerData').html(ledgerHTML);
                     $('#openingBalance').text(`Rs. ${openingBalance.toFixed(2)}`);
                     $('#totalDebit').text(`Rs. ${totalDebit.toFixed(2)}`);
@@ -324,9 +323,9 @@
                 }
             });
         });
-
     });
 </script>
+
 <script>
     document.getElementById("downloadPdf").addEventListener("click", function() {
         const element = document.querySelector(".ledger-container");

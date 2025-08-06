@@ -13,38 +13,20 @@
                     <form id="ledgerSearchForm">
                         @csrf
                         <div class="row g-3">
-                            <div class="col-md-3">
-                                <label for="salesman" class="form-label">Select Salesman</label>
+                            <div class="col-md-4">
+                                <label for="salesman" class="form-label">Select Order Bookers</label>
                                 <select class="form-control" id="salesman" name="salesman" required>
                                     <option value="All">All</option>
-                                    @foreach($Salesmans as $saleman)
-                                    <option value="{{ $saleman->name }}">{{ $saleman->name }}</option>
+                                    @foreach($orderbookers as $booker)
+                                    <option value="{{ $booker->id }}">{{ $booker->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            @if(Auth::check() && Auth::user()->usertype === 'admin')
-                            <div class="col-md-3">
-                                <label for="type" class="form-label">Select Type</label>
-                                <select id="type" name="type" class="form-control">
-                                    <option value="all">All</option>
-                                    <option value="distributor">Distributor</option>
-                                    <option value="customer">Customer</option>
-                                </select>
-                            </div>
-                            @elseif(Auth::check() && Auth::user()->usertype === 'distributor')
-                            <div class="col-md-3">
-                                <label for="type" class="form-label">Select Type</label>
-                                <select id="type" name="type" class="form-control">
-                                    <option value="customer">Customer</option>
-                                </select>
-                            </div>
-                            @endif
-
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label for="start_date" class="form-label">Start Date</label>
                                 <input type="date" id="start_date" name="start_date" class="form-control">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label for="end_date" class="form-label">End Date</label>
                                 <input type="date" id="end_date" name="end_date" class="form-control">
                             </div>
@@ -117,7 +99,6 @@
 <script>
     document.getElementById("searchLedger").addEventListener("click", function() {
         let salesman = document.getElementById("salesman").value;
-        let type = document.getElementById("type").value;
         let startDate = document.getElementById("start_date").value;
         let endDate = document.getElementById("end_date").value;
         let csrfToken = document.querySelector('input[name="_token"]').value;
@@ -130,25 +111,23 @@
                 },
                 body: JSON.stringify({
                     salesman: salesman,
-                    type: type,
                     start_date: startDate,
                     end_date: endDate
                 })
             })
             .then(response => response.json())
             .then(data => {
-                const selectedSalesman = document.getElementById("salesman").value;
                 const salesmanHeading = document.getElementById("salesmanHeading");
-                salesmanHeading.innerHTML = selectedSalesman === "All" ? "Salesman: All" : "Salesman: " + selectedSalesman;
-
                 let tableHead = document.querySelector("#recoveryTable thead");
                 let tableBody = document.querySelector("#recoveryTable tbody");
                 tableBody.innerHTML = "";
 
-                if (selectedSalesman !== 'All') {
-                    // Show the main thead
-                    tableHead.style.display = "table-header-group";
+                if (salesman !== 'All') {
+                    // If specific salesman selected, use the name from first item (since all are same)
+                    const bookerName = data.length > 0 ? data[0].salesman : salesman;
+                    salesmanHeading.innerHTML = "Order Booker: " + bookerName;
 
+                    tableHead.style.display = "table-header-group";
                     let totalAmount = 0;
 
                     if (data.length > 0) {
@@ -157,15 +136,15 @@
                             let amount = parseFloat(item.amount_paid.replace(/,/g, ''));
                             totalAmount += amount;
 
-                            let row = `<tr>
-                            <td>${index + 1}</td>
-                            <td>${formattedDate}</td>
-                            <td>${item.party_name}</td>
-                            <td>${item.area}</td>
-                            <td>${item.remarks}</td>
-                            <td>${item.amount_paid}</td>
-                        </tr>`;
-                            tableBody.innerHTML += row;
+                            tableBody.innerHTML += `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${formattedDate}</td>
+                                <td>${item.party_name}</td>
+                                <td>${item.area}</td>
+                                <td>${item.remarks}</td>
+                                <td>${item.amount_paid}</td>
+                            </tr>`;
                         });
 
                         tableBody.innerHTML += `
@@ -180,9 +159,9 @@
                     } else {
                         tableBody.innerHTML = `<tr><td colspan="6" class="text-center">No Data Available</td></tr>`;
                     }
-
                 } else {
-                    // Hide the main static thead for 'All'
+                    // For All salesmen
+                    salesmanHeading.innerHTML = "Order Booker: All";
                     tableHead.style.display = "none";
 
                     if (data.length === 0) {
@@ -200,9 +179,8 @@
                     for (const [smName, rows] of Object.entries(grouped)) {
                         let total = 0;
 
-                        // Group heading
                         tableBody.innerHTML += `
-                        <tr><td colspan="6" class="fw-bold text-primary">Salesman: ${smName}</td></tr>
+                        <tr><td colspan="6" class="fw-bold text-primary">Order Booker: ${smName}</td></tr>
                         <tr>
                             <th>Voc #</th>
                             <th>Date</th>
@@ -210,8 +188,7 @@
                             <th>Area</th>
                             <th>Remarks</th>
                             <th>Rec Amt</th>
-                        </tr>
-                    `;
+                        </tr>`;
 
                         rows.forEach((item, index) => {
                             const formattedDate = new Date(item.date).toLocaleDateString("en-GB");
@@ -238,8 +215,7 @@
                             <td colspan="5" class="text-end fw-bold">Total Customers:</td>
                             <td class="fw-bold">${rows.length}</td>
                         </tr>
-                        <tr><td colspan="6" class="text-center text-muted">------------------------------------------</td></tr>
-                    `;
+                        <tr><td colspan="6" class="text-center text-muted">------------------------------------------</td></tr>`;
                     }
                 }
             })

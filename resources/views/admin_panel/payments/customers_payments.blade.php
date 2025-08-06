@@ -93,9 +93,11 @@
                                         <th>Date</th>
                                         <th>Customer Name</th>
                                         <th>Total Amount</th>
-                                        <th>Remaining</th> <!-- NEW -->
+                                        <th>Remaining</th>
                                         <th>Payment Status</th>
                                         <th>Amount Received</th>
+                                        <th>Difference Amount</th> <!-- NEW -->
+                                        <th>Reason</th> <!-- NEW -->
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -168,10 +170,16 @@
     <td>${bill.date}</td>
     <td>${bill.customer?.customer_name ?? 'N/A'}</td>
     <td>Rs. ${parseFloat(bill.amount).toLocaleString()}</td>
-    <td>Rs. ${parseFloat(bill.remaining_amount ?? bill.amount).toLocaleString()}</td> <!-- NEW -->
+    <td>Rs. ${parseFloat(bill.remaining_amount ?? bill.amount).toLocaleString()}</td>
     <td><span class="badge ${statusClass} p-2">${bill.payment_status}</span></td>
     <td>
         <input type="number" name="amount_received[${bill.id}]" step="0.01" min="0" class="form-control">
+    </td>
+    <td>
+        <input type="number" name="difference_amount[${bill.id}]" step="0.01" min="0" class="form-control" placeholder="If any">
+    </td>
+    <td>
+        <input type="text" name="difference_reason[${bill.id}]" class="form-control" placeholder="e.g. Sale return" style="width:150px!important;">
     </td>
 </tr>
 `);
