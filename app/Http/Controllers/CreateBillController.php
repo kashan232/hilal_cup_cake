@@ -315,7 +315,8 @@ class CreateBillController extends Controller
             $userId = $user->user_id;
 
             $bills = CreateBill::with('customer')
-                ->where('status', 'unassigned')
+                ->where('status', 'Assigned')
+                ->where('payment_status', 'Unpaid') // ✅ Only unpaid bills
                 ->where(function ($query) use ($userId) {
                     $query->where('order_booker_id', $userId)
                         ->orWhere(function ($q) use ($userId) {
@@ -346,7 +347,7 @@ class CreateBillController extends Controller
         DB::table('create_bills')
             ->whereIn('id', $billIds)
             ->update([
-                'status' => 'assigned',
+                'status' => 'Assigned',
                 'assign_type' => $assignType,
                 'assign_user_id' => $userId,
                 'asigned_date' => $asigned_date,

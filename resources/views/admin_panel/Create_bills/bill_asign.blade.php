@@ -83,6 +83,7 @@
     // Assign To Change Event
     $('#assign_to').on('change', function() {
         let role = $(this).val();
+
         $('#user_id').html('<option>Loading...</option>');
 
         $.ajax({
