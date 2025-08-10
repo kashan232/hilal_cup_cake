@@ -19,8 +19,31 @@
                         <strong>Success!</strong> {{ session('success') }}.
                     </div>
                     @endif
+                    <form method="GET" action="{{ route('customer-recovery') }}" class="mb-3">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <select name="booker_id" class="form-select">
+                                    <option value="">-- Select Booker --</option>
+                                    @foreach($bookers as $booker)
+                                    <option value="{{ $booker->id }}" {{ request('booker_id') == $booker->id ? 'selected' : '' }}>
+                                        {{ $booker->name }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary">Filter</button>
+                            </div>
+                        </div>
+                    </form>
+
 
                     <div class="table-responsive">
+                        @if($totalAmount > 0)
+                        <div class="alert alert-danger fs-4">
+                            <strong>Total Recovery:</strong> Rs. {{ number_format($totalAmount, 0) }}
+                        </div>
+                        @endif
                         <table class="table datanew">
                             <thead>
                                 <tr>
@@ -40,7 +63,7 @@
                                     <td>{{ $key + 1 }}</td>
                                     <td>{{ $recovery->date }}</td>
                                     <td>{{ $recovery->customer->customer_name ?? 'N/A' }}</td>
-                                    <td>{{ $recovery->salesman }}</td>
+                                    <td>{{ $recovery->salesmanRelation->name ?? 'N/A' }}</td>
                                     <td class="amount_paid">{{ number_format($recovery->amount_paid, 0) }}</td>
                                     <td class="remarks">{{ $recovery->remarks }}</td>
                                     <td>

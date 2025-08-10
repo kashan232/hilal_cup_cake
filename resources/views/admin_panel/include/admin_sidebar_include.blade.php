@@ -181,6 +181,7 @@
                             @endif
                         </a>
                         <ul>
+                           
                             <li><a href="{{ route('bills') }}"> Bills </a></li>
                         </ul>
                     </li>
@@ -270,6 +271,7 @@
                                 <span> Bills</span>
                             </a>
                             <ul>
+                                <li><a href="{{ route('create-bill') }}">Create Bill </a></li>
                                 <li><a href="{{ route('bills') }}"> Bills </a></li>
                             </ul>
                         </li>

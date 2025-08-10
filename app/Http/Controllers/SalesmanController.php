@@ -70,6 +70,7 @@ class SalesmanController extends Controller
             $salesman = Salesman::create([
                 'admin_or_user_id' => $userId,
                 'name' => $request->name,
+                'email' => $request->email,
                 'phone' => $request->phone,
                 'designation' => $request->designation,
                 'city' => $request->city,

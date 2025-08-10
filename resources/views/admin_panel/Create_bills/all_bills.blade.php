@@ -119,17 +119,42 @@
 
             <div class="card p-4">
                 <div class="card-body">
+                    <form method="GET" action="{{ route('bills') }}" class="mb-3">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label>Select OrderBooker</label>
+                                <select name="booker_id" class="form-control">
+                                    <option value="">-- Select Order Booker --</option>
+                                    @foreach($OrderBookers as $booker)
+                                    <option value="{{ $booker->id }}" {{ request('booker_id') == $booker->id ? 'selected' : '' }}>
+                                        {{ $booker->name }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Start Date</label>
+                                <input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label>End Date</label>
+                                <input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control">
+                            </div>
+                            <div class="col-md-3 mt-4">
+                                <button type="submit" class="btn btn-primary">Filter</button>
+                                <a href="{{ route('bills') }}" class="btn btn-secondary">Reset</a>
+                            </div>
+                        </div>
+                    </form>
                     <div class="table-responsive">
                         <table class="table datanew">
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Customer</th>
-                                    <th>Invoice No</th>
-                                    <th>Date</th>
+                                    <th>Usertype</th>
+                                    <th>Invoice No | Customer | Date</th>
                                     <th>Amount</th>
-                                    <th>OrderBooker</th>
-                                    <th>Salesman</th>
+                                    <th>Booker / Saleman</th>
                                     <th>Status</th>
                                     <th>Assigned & Date</th>
                                     <th>Bill Aging</th>
@@ -140,8 +165,8 @@
                             <tbody>
                                 @foreach($bills as $index => $bill)
                                 @php
-                                    $status = strtolower($bill->payment_status);
-                                    $billDate = $bill->date ? \Carbon\Carbon::parse($bill->date) : null; // <-- Changed here
+                                $status = strtolower($bill->payment_status);
+                                $billDate = $bill->date ? \Carbon\Carbon::parse($bill->date) : null; // <-- Changed here
                                     $now=\Carbon\Carbon::now();
                                     $daysPassed=$billDate ? $billDate->diffInDays($now) : null;
                                     $showAlert = $bill->status === 'assigned' && $status !== 'paid' && $daysPassed >= 5;
@@ -149,14 +174,13 @@
                                     @endphp
                                     <tr {!! $rowBg !!}>
                                         <td>{{ $index + 1 }}</td>
-                                        <td>{{ $bill->customer->customer_name ?? 'N/A' }}</td>
-                                        <td>{{ $bill->invoice_number }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($bill->date)->format('d-m-Y') }}</td>
+                                        <td>{{ $bill->usertype }}</td>
+                                        <td> {{ $bill->invoice_number }} <br> {{ $bill->customer->customer_name ?? 'N/A' }} <br>{{ \Carbon\Carbon::parse($bill->date)->format('d-m-Y') }}</td>
+
                                         <td>
                                             Rs. {{ number_format($bill->amount, 2) }}
                                         </td>
-                                        <td>{{ $bill->orderBooker->name ?? 'N/A' }}</td>
-                                        <td>{{ $bill->salesman->name ?? 'N/A' }}</td>
+                                        <td>{{ $bill->orderBooker->name ?? 'N/A' }} / <br> {{ $bill->salesman->name ?? 'N/A' }}</td>
                                         <!-- Status Badge -->
                                         <td>
                                             <span class="badge p-2 {{ $bill->status == 'unassigned' ? 'bg-dark' : 'bg-success' }}">
@@ -238,6 +262,12 @@
                                                 data-id="{{ $bill->id }}"
                                                 data-current_date="{{ $bill->asigned_date }}">
                                                 Extend Date
+                                            </a>
+
+                                            <a href="javascript:void(0);"
+                                                class="btn btn-sm btn-secondary text-white unassign-bill-btn"
+                                                data-id="{{ $bill->id }}">
+                                                Unassign
                                             </a>
                                             @else
                                             <span class="badge bg-secondary">No Action</span>
@@ -331,4 +361,43 @@
     }
 
     $('#current_assigned_date').val(formatDate(currentDate));
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    $(document).on('click', '.unassign-bill-btn', function() {
+        let billId = $(this).data('id');
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This bill will be unassigned!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, unassign it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ route('bills.unassign') }}", // ✅ Backend route
+                    type: 'POST',
+                    data: {
+                        _token: "{{ csrf_token() }}",
+                        bill_id: billId
+                    },
+                    success: function(response) {
+                        Swal.fire(
+                            'Unassigned!',
+                            'The bill has been unassigned.',
+                            'success'
+                        );
+                        location.reload(); // Reload table
+                    },
+                    error: function() {
+                        Swal.fire('Error!', 'Something went wrong.', 'error');
+                    }
+                });
+            }
+        });
+    });
 </script>

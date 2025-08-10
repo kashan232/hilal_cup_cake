@@ -56,6 +56,7 @@
                                         <th>#</th>
                                         <th>Designation</th>
                                         <th>Name</th>
+                                        <th>Email</th>
                                         <th>Phone</th>
                                         <th>City</th>
                                         <th>Area</th>
@@ -71,6 +72,7 @@
                                         <td>{{ $key + 1 }}</td>
                                         <td>{{ $salesman->designation }}</td>
                                         <td>{{ $salesman->name }}</td>
+                                        <td>{{ $salesman->email }}</td>
                                         <td>{{ $salesman->phone }}</td>
                                         <td>{{ $salesman->city }}</td>
                                         <td>

@@ -55,7 +55,7 @@
 
                                 <div class="col-md-6">
                                     <label>Invoice Number</label>
-                                    <input type="text" name="bills[0][invoice_number]" class="form-control" required>
+                                    <input type="number" name="bills[0][invoice_number]" class="form-control" required>
                                 </div>
 
                                 <div class="col-md-6">
@@ -194,4 +194,13 @@
         bindBillEvents(newEntry);
         billIndex++;
     });
+
+    $(document).on('click', '.remove-bill', function() {
+    // If only one bill-entry remains, don't allow removing
+    if ($('.bill-entry').length > 1) {
+        $(this).closest('.bill-entry').remove();
+    } else {
+        alert("You must keep at least one bill entry.");
+    }
+});
 </script>

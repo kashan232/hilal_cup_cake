@@ -80,7 +80,7 @@
 @include('admin_panel.include.footer_include')
 
 <script>
-    // Assign To Change Event
+    // Assign To change → load users
     $('#assign_to').on('change', function() {
         let role = $(this).val();
 
@@ -101,29 +101,37 @@
                 $('#user_id').html(options);
             }
         });
+    });
 
-        // Also load unassigned bills
+    // When Select User changes → load bills
+    $('#user_id').on('change', function() {
+        let role = $('#assign_to').val();
+        let userId = $(this).val();
+
+        if (!role || !userId) return;
+
         $.ajax({
             url: '{{ route("fetch-unassigned-bills") }}',
             type: 'POST',
             data: {
-                _token: '{{ csrf_token() }}'
+                _token: '{{ csrf_token() }}',
+                role: role,
+                user_id: userId
             },
             success: function(bills) {
                 let rows = '';
                 bills.forEach(function(bill) {
                     rows += `
-            <tr>
-                <td><input type="checkbox" name="bill_ids[]" value="${bill.id}"></td>
-                <td>${bill.invoice_number}</td>
-                <td>${bill.customer?.customer_name ?? 'N/A'}</td>
-                <td>${bill.date}</td>
-                <td>Rs. ${parseFloat(bill.amount).toLocaleString()}</td>
-            </tr>`;
+                    <tr>
+                        <td><input type="checkbox" name="bill_ids[]" value="${bill.id}"></td>
+                        <td>${bill.invoice_number}</td>
+                        <td>${bill.customer?.customer_name ?? 'N/A'}</td>
+                        <td>${bill.date}</td>
+                        <td>Rs. ${parseFloat(bill.amount).toLocaleString()}</td>
+                    </tr>`;
                 });
                 $('tbody').html(rows);
             }
-
         });
     });
 
@@ -131,5 +139,27 @@
     document.getElementById('select_all').addEventListener('change', function() {
         let checkboxes = document.querySelectorAll('input[name="bill_ids[]"]');
         checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Form submit validation
+    $('form').on('submit', function(e) {
+        let checkedBills = $('input[name="bill_ids[]"]:checked').length;
+
+        if (checkedBills === 0) {
+            e.preventDefault(); // stop the form from submitting
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Kindly check the bills',
+                text: 'Please select at least one bill before assigning.',
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'OK'
+            });
+
+            return false;
+        }
     });
 </script>

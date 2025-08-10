@@ -106,21 +106,38 @@ class CustomerController extends Controller
         ]);
     }
 
-    public function customer_recovery()
+    public function customer_recovery(Request $request)
     {
-        if (Auth::id()) {
-            $userId = Auth::id();
-
-            $Recoveries = CustomerRecovery::where('admin_or_user_id', $userId)
-                ->with('customer')
-                ->orderBy('id', 'desc') // Sort by latest ID
-                ->get();
-
-            return view('admin_panel.customer.customer_recovery', compact('Recoveries'));
-        } else {
+        if (!Auth::check()) {
             return redirect()->back();
         }
+
+        $userId = Auth::id();
+        $query = CustomerRecovery::with(['customer', 'salesmanRelation'])
+            ->orderBy('id', 'desc');
+
+        // Booker filter
+        if ($request->filled('booker_id')) {
+            $query->where('salesman', $request->booker_id);
+        }
+
+        // Non-admin/accountant filter
+        if (Auth::user()->usertype !== 'admin' && Auth::user()->usertype !== 'accountant') {
+            $query->where('admin_or_user_id', $userId);
+        }
+
+        $Recoveries = $query->get();
+
+        // Total amount
+        $totalAmount = $Recoveries->sum('amount_paid');
+
+        // Booker dropdown list
+        $bookers = Salesman::where('designation', 'orderbooker')->get();
+
+        return view('admin_panel.customer.customer_recovery', compact('Recoveries', 'bookers', 'totalAmount'));
     }
+
+
 
     public function getCustomerData($id)
     {

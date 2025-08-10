@@ -10,11 +10,16 @@ class CustomerRecovery extends Model
 {
     use HasFactory;
     use SoftDeletes;
-       
+
     protected $guarded = [];
 
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customer_ledger_id');
+    }
+
+    public function salesmanRelation()
+    {
+        return $this->belongsTo(Salesman::class, 'salesman', 'id');
     }
 }

@@ -55,6 +55,7 @@ Route::get('/bills', [CreateBillController::class, 'bills'])->name('bills');
 Route::post('/delete-bill', [CreateBillController::class, 'deleteBill'])->name('delete-bill');
 Route::post('/update-bill', [CreateBillController::class, 'updateBill'])->name('update-bill');
 Route::post('/bills/extend-date', [CreateBillController::class, 'extendAssignedDate'])->name('bills.extendDate');
+Route::post('/bills/unassign', [CreateBillController::class, 'unassign'])->name('bills.unassign');
 
 
 Route::get('/bill-asign', [CreateBillController::class, 'bill_asign'])->name('bill-asign');
