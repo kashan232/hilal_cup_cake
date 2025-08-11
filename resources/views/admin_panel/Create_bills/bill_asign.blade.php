@@ -61,7 +61,7 @@
                                     <tr>
                                         <th><input type="checkbox" id="select_all"></th>
                                         <th>Invoice No</th>
-                                        <th>Customer Name</th>
+                                        <th>Customer</th>
                                         <th>Bill Date</th>
                                         <th>Bill Amount</th>
                                     </tr>
@@ -125,7 +125,7 @@
                     <tr>
                         <td><input type="checkbox" name="bill_ids[]" value="${bill.id}"></td>
                         <td>${bill.invoice_number}</td>
-                        <td>${bill.customer?.customer_name ?? 'N/A'}</td>
+                        <td>${bill.customer?.shop_name ?? 'N/A'}</td>
                         <td>${bill.date}</td>
                         <td>Rs. ${parseFloat(bill.amount).toLocaleString()}</td>
                     </tr>`;

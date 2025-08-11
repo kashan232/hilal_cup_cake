@@ -69,7 +69,7 @@
                                         <option value="">Select customer</option>
                                         @foreach($Customers as $customer)
                                         <option value="{{ $customer->id }}" data-city="{{ $customer->city }}" data-area="{{ $customer->area }}">
-                                            {{ $customer->customer_name }}
+                                            {{ $customer->shop_name }}
                                         </option>
                                         @endforeach
                                     </select>

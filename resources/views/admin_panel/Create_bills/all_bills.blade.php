@@ -121,6 +121,7 @@
                 <div class="card-body">
                     <form method="GET" action="{{ route('bills') }}" class="mb-3">
                         <div class="row g-2">
+                            @if(Auth::check() && Auth::user()->usertype === 'admin')
                             <div class="col-md-3">
                                 <label>Select OrderBooker</label>
                                 <select name="booker_id" class="form-control">
@@ -132,6 +133,7 @@
                                     @endforeach
                                 </select>
                             </div>
+                            @endif
                             <div class="col-md-3">
                                 <label>Start Date</label>
                                 <input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control">
@@ -175,7 +177,7 @@
                                     <tr {!! $rowBg !!}>
                                         <td>{{ $index + 1 }}</td>
                                         <td>{{ $bill->usertype }}</td>
-                                        <td> {{ $bill->invoice_number }} <br> {{ $bill->customer->customer_name ?? 'N/A' }} <br>{{ \Carbon\Carbon::parse($bill->date)->format('d-m-Y') }}</td>
+                                        <td> {{ $bill->invoice_number }} <br> {{ $bill->customer->shop_name ?? 'N/A' }} <br>{{ \Carbon\Carbon::parse($bill->date)->format('d-m-Y') }}</td>
 
                                         <td>
                                             Rs. {{ number_format($bill->amount, 2) }}

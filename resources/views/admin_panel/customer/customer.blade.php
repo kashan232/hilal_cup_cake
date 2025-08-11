@@ -10,11 +10,14 @@
                     <h4>Customer List</h4>
                     <h6>Manage Customers</h6>
                 </div>
+                @if(Auth::check() && Auth::user()->usertype === 'admin')
                 <div class="page-btn">
                     <button class="btn btn-added" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
-                        <img src="assets/img/icons/plus.svg" class="me-1" alt="img">Add Customer
+                       Add Customer
                     </button>
                 </div>
+                @endif
+
             </div>
 
             @if (session()->has('success'))
@@ -76,7 +79,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    
+
                     <input type="text" name="shop_name" class="form-control mt-2" placeholder="Shop Name" required>
                     <input type="text" name="address" class="form-control mt-2" placeholder="Address" required>
                     <input type="text" name="customer_name" class="form-control mt-2" placeholder="ShopKeeper Name" required>
@@ -142,7 +145,7 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                         <div class="col-md-6">
+                        <div class="col-md-6">
                             <label class="form-label">City</label>
                             <select class="form-control" name="city" id="edit_citySelect" required>
                                 <option value="">Select City</option>
