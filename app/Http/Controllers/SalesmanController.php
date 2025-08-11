@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Salesman;
 use App\Models\City;
 use App\Models\Area;
+use App\Models\CreateBill;
 use App\Models\Designation;
 use App\Models\User;
 use Carbon\Carbon;
@@ -175,7 +176,38 @@ class SalesmanController extends Controller
         return response()->json(['error' => 'Salesman not found!'], 404);
     }
 
+    public function deleteSalesman($id, Request $request)
+    {
+        $salesman = Salesman::findOrFail($id);
 
+        // ✅ Check if this salesman/orderbooker/accountant is used in bills
+        $billExists = CreateBill::where('order_booker_id', $id)
+            ->orWhere('salesman_id', $id)
+            ->orWhere('assign_user_id', $id)
+            ->exists();
+
+        if ($billExists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The selected ' . $request->type . ' has bills generated and cannot be deleted.'
+            ], 400);
+        }
+
+        // ✅ Delete from sales_mens
+        $salesman->delete();
+
+        // ✅ Delete related user from users table
+        if (in_array($request->type, ['orderbooker', 'saleman', 'accountant'])) {
+            User::where('usertype', $request->type)
+                ->where('name', $salesman->name)
+                ->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => ucfirst($request->type) . ' deleted successfully.'
+        ]);
+    }
     public function designation()
     {
         if (Auth::id()) {

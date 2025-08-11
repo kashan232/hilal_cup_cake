@@ -120,6 +120,14 @@
                                                 data-bs-toggle="modal" data-bs-target="#editSalesmanModal">
                                                 Edit
                                             </button>
+
+                                            <button class="btn btn-sm btn-danger deleteSalesmanBtn"
+                                                data-id="{{ $salesman->id }}"
+                                                data-type="{{ $salesman->designation }}"
+                                                data-url="{{ route('salesman.delete', $salesman->id) }}">
+                                                Delete
+                                            </button>
+
                                             @else
                                             <button class="btn btn-sm btn-danger">
                                                 No Right
@@ -441,4 +449,43 @@
                 });
             }
         }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).on('click', '.deleteSalesmanBtn', function() {
+            let deleteUrl = $(this).data('url'); // Laravel route() ka URL
+            let type = $(this).data('type');
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This will permanently delete the " + type,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: deleteUrl,
+                        type: 'DELETE',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            type: type
+                        },
+                        success: function(res) {
+                            Swal.fire('Deleted!', res.message, 'success')
+                                .then(() => location.reload());
+                        },
+                        error: function(xhr) {
+                            let errMsg = 'Something went wrong.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errMsg = xhr.responseJSON.message; // ✅ Laravel ka message
+                            }
+                            Swal.fire('Error!', errMsg, 'error');
+                        }
+                    });
+                }
+            });
+        });
     </script>

@@ -161,6 +161,7 @@ Route::get('/fetch-cities', [SalesmanController::class, 'fetchCities'])->name('f
 Route::post('/salesman/toggle-status', [SalesmanController::class, 'toggleStatus'])->name('toggle-salesman-status');
 Route::get('/fetch-areas', [CustomerController::class, 'fetchAreas'])->name('fetch-areas');
 Route::get('/fetch-designation', [CustomerController::class, 'fetchdesignation'])->name('fetch-designation');
+Route::delete('/salesman/delete/{id}', [SalesmanController::class, 'deleteSalesman'])->name('salesman.delete');
 
 
 // designation
