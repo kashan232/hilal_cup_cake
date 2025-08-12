@@ -49,8 +49,8 @@
                                 <tr>
                                     <th>#</th>
                                     <th>Date</th>
-                                    <th>Name</th>
-                                    <th>Salesman</th>
+                                    <th>Shopname</th>
+                                    <th>OrderBooker</th>
                                     <th>Amount Paid</th>
                                     <th>Remarks</th>
                                     <th>Difference Details</th>
@@ -62,7 +62,7 @@
                                 <tr id="recovery-row-{{ $recovery->id }}">
                                     <td>{{ $key + 1 }}</td>
                                     <td>{{ $recovery->date }}</td>
-                                    <td>{{ $recovery->customer->customer_name ?? 'N/A' }}</td>
+                                    <td>{{ $recovery->customer->shop_name ?? 'N/A' }}</td>
                                     <td>{{ $recovery->salesmanRelation->name ?? 'N/A' }}</td>
                                     <td class="amount_paid">{{ number_format($recovery->amount_paid, 0) }}</td>
                                     <td class="remarks">{{ $recovery->remarks }}</td>

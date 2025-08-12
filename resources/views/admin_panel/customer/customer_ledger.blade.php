@@ -32,8 +32,6 @@
                                     <th>Opening Balance</th>
                                     <th>Previous Balance</th>
                                     <th>Closing Balance</th>
-                                    <th>Updated At</th>
-                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -47,14 +45,7 @@
                                     <td>{{ number_format($ledger->opening_balance, 0) }}</td>
                                     <td>{{ number_format($ledger->previous_balance, 0) }}</td>
                                     <td id="closing_balance_{{ $ledger->id }}">{{ number_format($ledger->closing_balance, 0) }}</td>
-                                    <td>{{ $ledger->updated_at->format('Y-m-d H:i:s') }}</td>
-                                    <td>
-                                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#recoveryModal"
-                                            data-id="{{ $ledger->id }}"
-                                            data-closing-balance="{{ $ledger->closing_balance }}">
-                                            Add Recovery
-                                        </button>
-                                    </td>
+                                    
                                 </tr>
                                 @empty
                                 <tr>

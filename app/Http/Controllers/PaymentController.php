@@ -122,8 +122,8 @@ class PaymentController extends Controller
     public function storeCustomerPayment(Request $request)
     {
         $request->validate([
-            'customer_id'        => 'required|exists:customers,id',
-            'ordbker_id'         => 'required|exists:users,id',
+            'customer_id'        => 'required',
+            'ordbker_id'         => 'required',
             'payment_date'       => 'required|date',
             'payment_method'     => 'nullable|string',
             'bill_ids'           => 'nullable|array',

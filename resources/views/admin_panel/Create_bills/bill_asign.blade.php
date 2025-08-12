@@ -47,7 +47,7 @@
                             </div>
                             <div class="col-md-3">
                                 <label for="user_id" class="form-label">Asigned Date </label>
-                                <input type="date" name="asigned_date" class="form-control">
+                                <input type="date" name="asigned_date" class="form-control" required>
                             </div>
 
                             <div class="col-md-3 d-flex align-items-end">

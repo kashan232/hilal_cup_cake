@@ -91,7 +91,7 @@
                                         <th><input type="checkbox" id="select_all"></th>
                                         <th>Invoice No.</th>
                                         <th>Date</th>
-                                        <th>Customer Name</th>
+                                        <th>Customer Shop</th>
                                         <th>Total Amount</th>
                                         <th>Remaining</th>
                                         <th>Payment Status</th>
@@ -148,7 +148,7 @@
                 tbody.empty();
 
                 if (bills.length === 0) {
-                    tbody.html('<tr><td colspan="5" class="text-center">No unpaid or partial bills found.</td></tr>');
+                    tbody.html('<tr><td colspan="10" class="text-center">No unpaid or partial bills found.</td></tr>');
                 } else {
                     bills.forEach(bill => {
                         let statusClass = '';
@@ -168,7 +168,7 @@
     </td>
     <td>${bill.invoice_number}</td>
     <td>${bill.date}</td>
-    <td>${bill.customer?.customer_name ?? 'N/A'}</td>
+    <td>${bill.customer?.shop_name ?? 'N/A'}</td>
     <td>Rs. ${parseFloat(bill.amount).toLocaleString()}</td>
     <td>Rs. ${parseFloat(bill.remaining_amount ?? bill.amount).toLocaleString()}</td>
     <td><span class="badge ${statusClass} p-2">${bill.payment_status}</span></td>
@@ -184,7 +184,6 @@
 </tr>
 `);
                     });
-
                 }
 
                 $('#total_box').hide();
@@ -192,17 +191,20 @@
             });
     }
 
-    $(document).on('change', '.bill_checkbox', function() {
-        // Optional: you can auto-fill full amount if you want
-        const row = $(this).closest('tr');
-        const amountInput = row.find('input[name^="amount_received"]');
-
-        if (this.checked && !amountInput.val()) {
-            amountInput.val($(this).data('amount')); // Auto-fill default
-        }
-    });
+    // ✅ Function to recalculate total from Amount Received fields
+    function recalculateTotal() {
+        let total = 0;
+        $('.bill_checkbox:checked').each(function() {
+            const row = $(this).closest('tr');
+            const amountReceived = parseFloat(row.find('input[name^="amount_received"]').val()) || 0;
+            total += amountReceived;
+        });
+        $('#total_amount').text(total.toLocaleString());
+        $('#total_box').toggle(total > 0);
+    }
 
     $(document).ready(function() {
+        // Customer change → fetch data & bills
         $('#customer').change(function() {
             const customerId = $(this).val();
             if (customerId) {
@@ -211,15 +213,23 @@
             }
         });
 
-        // Total Calculation
+        // Checkbox change → auto-fill & recalc
         $(document).on('change', '.bill_checkbox', function() {
-            let total = 0;
-            $('.bill_checkbox:checked').each(function() {
-                total += parseFloat($(this).data('amount'));
-            });
+            const row = $(this).closest('tr');
+            const amountInput = row.find('input[name^="amount_received"]');
 
-            $('#total_amount').text(total.toLocaleString());
-            $('#total_box').toggle(total > 0);
+            if (this.checked && !amountInput.val()) {
+                amountInput.val($(this).data('amount'));
+            }
+            if (!this.checked) {
+                amountInput.val('');
+            }
+            recalculateTotal();
+        });
+
+        // Amount Received change → recalc
+        $(document).on('input', 'input[name^="amount_received"]', function() {
+            recalculateTotal();
         });
 
         // Select All
