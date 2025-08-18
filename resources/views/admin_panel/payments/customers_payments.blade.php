@@ -31,9 +31,15 @@
                             <strong>Success!</strong> {{ session('success') }}.
                         </div>
                         @endif
-                        {{-- Customer Dropdown --}}
+
+                        @if (session()->has('error'))
+                        <div class="alert alert-danger">
+                            <strong>error!</strong> {{ session('error') }}.
+                        </div>
+                        @endif
+
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label>Customer</label>
                                 <select name="customer_id" id="customer" class="form-control" required>
                                     <option value="">Select Customer</option>
@@ -45,8 +51,7 @@
                                 </select>
                             </div>
 
-                            {{-- ordbker Dropdown --}}
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label>Booker</label>
                                 <select name="ordbker_id" class="form-control" required>
                                     <option value="">Select Order Booker</option>
@@ -55,21 +60,8 @@
                                     @endforeach
                                 </select>
                             </div>
-                        </div>
 
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <label>Payment Method</label>
-                                <select name="payment_method" class="form-control" required>
-                                    <option value="">Select Method</option>
-                                    <option value="Cash">Cash</option>
-                                    <option value="Bank">Bank</option>
-                                    <option value="Cheque">Cheque</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label>Payment Date</label>
                                 <input type="date" name="payment_date" value="{{ date('Y-m-d') }}" class="form-control" required>
                             </div>

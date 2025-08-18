@@ -125,12 +125,13 @@ class PaymentController extends Controller
             'customer_id'        => 'required',
             'ordbker_id'         => 'required',
             'payment_date'       => 'required|date',
-            'payment_method'     => 'nullable|string',
             'bill_ids'           => 'nullable|array',
             'amount_received'    => 'nullable|array',
             'difference_amount'  => 'nullable|array',
             'difference_reason'  => 'nullable|array',
         ]);
+        $user = Auth::user();
+        $usertype = $user->usertype;
 
         $latestLedger = CustomerLedger::where('customer_id', $request->customer_id)
             ->latest('id')
@@ -142,7 +143,6 @@ class PaymentController extends Controller
 
         $previous_balance = $latestLedger->closing_balance;
         $amount_paid_total = 0;
-
         if ($request->has('bill_ids') && is_array($request->bill_ids)) {
             foreach ($request->bill_ids as $bill_id) {
                 $received = floatval($request->amount_received[$bill_id] ?? 0);
@@ -150,9 +150,12 @@ class PaymentController extends Controller
                 $amount_paid_total += ($received + $difference);
             }
         }
-
+        if ($amount_paid_total > $previous_balance) {
+            return redirect()->back()
+                ->with('error', 'Paid amount cannot be greater than remaining balance!')
+                ->withInput();
+        }
         $new_closing_balance = $previous_balance - $amount_paid_total;
-
         $latestLedger->update([
             'admin_or_user_id'  => auth()->id(),
             'opening_balance'   => $latestLedger->opening_balance,
@@ -176,11 +179,12 @@ class PaymentController extends Controller
 
         $recovery = CustomerRecovery::create([
             'admin_or_user_id'     => auth()->id(),
+            'usertype'             => $usertype,
             'customer_ledger_id'   => $latestLedger->id,
             'amount_paid'          => $amount_paid_total,
             'salesman'             => $request->ordbker_id,
             'date'                 => $request->payment_date,
-            'remarks'              => $request->payment_method,
+            'remarks'              => 'Cash',
             'difference_details'   => !empty($differenceDetails) ? json_encode($differenceDetails) : null,
         ]);
 
@@ -207,7 +211,6 @@ class PaymentController extends Controller
                 $bill->update([
                     'payment_status'   => $payment_status,
                     'remaining_amount' => $new_remaining,
-                    'status'           => 'Assigned',
                 ]);
             }
         }

@@ -159,8 +159,7 @@
                                     <th>Booker / Saleman</th>
                                     <th>Status</th>
                                     <th>Assigned & Date</th>
-                                    <th>Bill Aging</th>
-                                    <th>Payment Status</th>
+                                    <th>Payment</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -185,9 +184,20 @@
                                         <td>{{ $bill->orderBooker->name ?? 'N/A' }} / <br> {{ $bill->salesman->name ?? 'N/A' }}</td>
                                         <!-- Status Badge -->
                                         <td>
-                                            <span class="badge p-2 {{ $bill->status == 'unassigned' ? 'bg-dark' : 'bg-success' }}">
+                                            <span class="badge p-2 mt-1 mb-1 {{ $bill->status == 'unassigned' ? 'bg-dark' : 'bg-success' }}">
                                                 {{ ucfirst($bill->status) }}
                                             </span>
+
+                                            <br>
+
+                                             @if($billDate)
+                                            <span class="badge bg-danger text-white p-2">
+                                                {{ $daysPassed }} {{ Str::plural('day', $daysPassed) }}
+                                            </span>
+                                            @else
+                                            <span class="text-muted">N/A</span>
+                                            @endif
+
                                         </td>
                                         <td>
                                             @if($bill->assign_type && $bill->assign_user_id)
@@ -201,18 +211,6 @@
                                             <span class="badge bg-secondary">Not Assigned</span>
                                             @endif
                                         </td>
-
-                                        <td>
-                                            @if($billDate)
-                                            <span class="badge bg-danger text-white p-2">
-                                                {{ $daysPassed }} {{ Str::plural('day', $daysPassed) }}
-                                            </span>
-                                            @else
-                                            <span class="text-muted">N/A</span>
-                                            @endif
-                                        </td>
-                                        <!-- Payment Status Badge -->
-                                        <!-- Payment Status Badge with Remaining Amount -->
                                         <td>
                                             @php
                                             $paymentStatus = $bill->payment_status;

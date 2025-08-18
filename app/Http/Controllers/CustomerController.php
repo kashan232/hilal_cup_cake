@@ -21,7 +21,9 @@ class CustomerController extends Controller
             $userId = Auth::id();
             $customers = Customer::where('admin_or_user_id', $userId)->get();
             $cities = City::all(); // Updated the variable name to avoid confusion
-            return view('admin_panel.customer.customer', compact('customers', 'cities'));
+            $OrderBookers = Salesman::where('designation', 'orderbooker')
+                ->get();
+            return view('admin_panel.customer.customer', compact('customers', 'cities', 'OrderBookers'));
         } else {
             return redirect()->back();
         }
@@ -41,6 +43,7 @@ class CustomerController extends Controller
             $userId = Auth::id();
             $customer = Customer::create([
                 'admin_or_user_id' => $userId,
+                'order_booker_id'    => json_encode($request->order_booker_id),
                 'city' => $request->city,
                 'area' => $request->area,
                 'customer_name' => $request->customer_name,
@@ -69,17 +72,37 @@ class CustomerController extends Controller
     }
 
 
-    public function customer_ledger()
+    public function customer_ledger(Request $request)
     {
         if (Auth::id()) {
             $userId = Auth::id();
-            $CustomerLedgers = CustomerLedger::where('admin_or_user_id', $userId)->with('Customer')->get();
-            $Salesmans = Salesman::where('admin_or_user_id', $userId)->where('designation', 'Saleman')->get();
-            return view('admin_panel.customer.customer_ledger', compact('CustomerLedgers', 'Salesmans'));
+
+            $CustomerLedgers = CustomerLedger::where('admin_or_user_id', $userId)
+                ->with('Customer');
+
+            // 👉 Filter by order booker
+            if ($request->filled('booker_id')) {
+                $bookerId = $request->booker_id;
+
+                $CustomerLedgers->whereHas('Customer', function ($q) use ($bookerId) {
+                    $q->whereJsonContains('order_booker_id', (string) $bookerId);
+                });
+            }
+
+            $CustomerLedgers = $CustomerLedgers->get();
+
+            $Salesmans = Salesman::where('admin_or_user_id', $userId)
+                ->where('designation', 'Saleman')
+                ->get();
+
+            $bookers = Salesman::where('designation', 'orderbooker')->get();
+
+            return view('admin_panel.customer.customer_ledger', compact('CustomerLedgers', 'Salesmans', 'bookers'));
         } else {
             return redirect()->back();
         }
     }
+
 
     public function customer_recovery_store(Request $request)
     {
@@ -121,6 +144,16 @@ class CustomerController extends Controller
             $query->where('salesman', $request->booker_id);
         }
 
+        // Usertype filter (admin / booker)
+        if ($request->filled('usertype')) {
+            $query->where('usertype', $request->usertype);
+        }
+
+        // Date range filter
+        if ($request->filled('from_date') && $request->filled('to_date')) {
+            $query->whereBetween('date', [$request->from_date, $request->to_date]);
+        }
+
         // Non-admin/accountant filter
         if (Auth::user()->usertype !== 'admin' && Auth::user()->usertype !== 'accountant') {
             $query->where('admin_or_user_id', $userId);
@@ -136,6 +169,7 @@ class CustomerController extends Controller
 
         return view('admin_panel.customer.customer_recovery', compact('Recoveries', 'bookers', 'totalAmount'));
     }
+
 
 
 
@@ -173,6 +207,7 @@ class CustomerController extends Controller
             'address' => $request->address,
             'shop_name' => $request->shop_name,
             'business_type_name' => $request->business_type_name,
+            'order_booker_id' => $request->order_booker_id,
         ]);
 
         $ledger = CustomerLedger::where('customer_id', $request->customer_id)->first();
@@ -280,5 +315,31 @@ class CustomerController extends Controller
         ]);
 
         return redirect()->route('customer-recovery')->with('success', 'Distributor recovery updated successfully.');
+    }
+
+    public function getByBooker($bookerId)
+    {
+        // Booker nikaalo
+        $booker = Salesman::where('designation', 'orderbooker')->findOrFail($bookerId);
+
+        // Booker ke areas
+        $areas = json_decode($booker->area, true) ?? [];
+
+        // Customers jo is booker ke sath map huye hain
+        $customers = Customer::whereJsonContains('order_booker_id', (string) $bookerId)->get();
+
+        // Salesmen jinka designation 'saleman' hai aur area overlap karta hai
+        $salesmen = Salesman::where('designation', 'saleman')
+            ->where(function ($q) use ($areas) {
+                foreach ($areas as $area) {
+                    $q->orWhereJsonContains('area', $area);
+                }
+            })
+            ->get();
+
+        return response()->json([
+            'customers' => $customers,
+            'salesmen'  => $salesmen,
+        ]);
     }
 }

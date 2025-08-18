@@ -14,6 +14,26 @@ class Customer extends Model
 
     protected $guarded = [];
 
+    public function orderBookers()
+    {
+        return $this->belongsToMany(Salesman::class, 'customer_orderbooker', 'customer_id', 'salesman_id');
+    }
+
+    public function getOrderBookerNamesAttribute()
+    {
+        // Decode JSON or fallback
+        $ids = json_decode($this->order_booker_id, true);
+
+        // Ensure it's always an array
+        if (is_null($ids)) {
+            $ids = []; // empty
+        } elseif (is_int($ids)) {
+            $ids = [$ids]; // single ID case
+        }
+
+        return \App\Models\Salesman::whereIn('id', $ids)->pluck('name')->toArray();
+    }
+
 
     public function city()
     {

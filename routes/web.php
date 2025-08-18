@@ -56,6 +56,7 @@ Route::post('/delete-bill', [CreateBillController::class, 'deleteBill'])->name('
 Route::post('/update-bill', [CreateBillController::class, 'updateBill'])->name('update-bill');
 Route::post('/bills/extend-date', [CreateBillController::class, 'extendAssignedDate'])->name('bills.extendDate');
 Route::post('/bills/unassign', [CreateBillController::class, 'unassign'])->name('bills.unassign');
+// routes/web.php
 
 
 Route::get('/bill-asign', [CreateBillController::class, 'bill_asign'])->name('bill-asign');
@@ -195,7 +196,7 @@ Route::post('/customer-recovery-store', [CustomerController::class, 'customer_re
 Route::get('/customer-recovery', [CustomerController::class, 'customer_recovery'])->name('customer-recovery');
 Route::get('/customer/edit/{id}', [CustomerController::class, 'getCustomerData'])->name('customer.edit');
 Route::put('/customer-recovery/{id}', [CustomerController::class, 'updateRecovery'])->name('customer_recovery.update');
-
+Route::get('/customers/by-booker/{id}', [CustomerController::class, 'getByBooker'])->name('customers.byBooker');
 
 Route::get('/local-sale', [LocalSaleController::class, 'local_sale'])->name('local-sale');
 Route::post('/store-local-sale', [LocalSaleController::class, 'store_local_sale'])->name('store-local-sale');

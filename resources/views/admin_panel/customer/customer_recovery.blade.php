@@ -20,8 +20,9 @@
                     </div>
                     @endif
                     <form method="GET" action="{{ route('customer-recovery') }}" class="mb-3">
-                        <div class="row g-2">
-                            <div class="col-md-4">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label">Order Booker</label>
                                 <select name="booker_id" class="form-select">
                                     <option value="">-- Select Booker --</option>
                                     @foreach($bookers as $booker)
@@ -31,11 +32,34 @@
                                     @endforeach
                                 </select>
                             </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">Usertype</label>
+                                <select name="usertype" class="form-select">
+                                    <option value="">-- Select Usertype --</option>
+                                    <option value="admin" {{ request('usertype') == 'admin' ? 'selected' : '' }}>Admin</option>
+                                    <option value="booker" {{ request('usertype') == 'booker' ? 'selected' : '' }}>Booker</option>
+                                </select>
+                            </div>
+
                             <div class="col-md-2">
+                                <label class="form-label">From Date</label>
+                                <input type="date" name="from_date" class="form-control" value="{{ request('from_date') }}">
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label">To Date</label>
+                                <input type="date" name="to_date" class="form-control" value="{{ request('to_date') }}">
+                            </div>
+
+                            <div class="col-md-2 d-flex gap-2">
                                 <button type="submit" class="btn btn-primary">Filter</button>
+                                <a href="{{ route('customer-recovery') }}" class="btn btn-secondary">Reset</a>
                             </div>
                         </div>
                     </form>
+
+
 
 
                     <div class="table-responsive">
@@ -49,6 +73,7 @@
                                 <tr>
                                     <th>#</th>
                                     <th>Date</th>
+                                    <th>Usertype</th>
                                     <th>Shopname</th>
                                     <th>OrderBooker</th>
                                     <th>Amount Paid</th>
@@ -62,6 +87,7 @@
                                 <tr id="recovery-row-{{ $recovery->id }}">
                                     <td>{{ $key + 1 }}</td>
                                     <td>{{ $recovery->date }}</td>
+                                    <td>{{ $recovery->usertype }}</td>
                                     <td>{{ $recovery->customer->shop_name ?? 'N/A' }}</td>
                                     <td>{{ $recovery->salesmanRelation->name ?? 'N/A' }}</td>
                                     <td class="amount_paid">{{ number_format($recovery->amount_paid, 0) }}</td>

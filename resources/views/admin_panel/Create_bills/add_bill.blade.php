@@ -38,9 +38,6 @@
                                 <label for="salesman_id" class="form-label">Salesman</label>
                                 <select class="form-select" id="salesman_id" name="salesman_id" required>
                                     <option value="" selected disabled>Select salesman</option>
-                                    @foreach($Salesmen as $salesman)
-                                    <option value="{{ $salesman->id }}">{{ $salesman->name }}</option>
-                                    @endforeach
                                 </select>
                             </div>
                         </div>
@@ -67,11 +64,7 @@
                                     <label>Customer</label>
                                     <select name="bills[0][customer_id]" class="form-control customer-select" required>
                                         <option value="">Select customer</option>
-                                        @foreach($Customers as $customer)
-                                        <option value="{{ $customer->id }}" data-city="{{ $customer->city }}" data-area="{{ $customer->area }}">
-                                            {{ $customer->shop_name }}
-                                        </option>
-                                        @endforeach
+                                        {{-- yahan koi foreach nahi hoga --}}
                                     </select>
                                 </div>
 
@@ -120,6 +113,49 @@
 </div>
 @include('admin_panel.include.footer_include')
 <script>
+    $('#order_booker_id').on('change', function() {
+        let bookerId = $(this).val();
+
+        if (bookerId) {
+            $.ajax({
+                url: "{{ route('customers.byBooker', ':id') }}".replace(':id', bookerId),
+                type: 'GET',
+                success: function(response) {
+                    let customers = response.customers || [];
+                    let salesmen = response.salesmen || [];
+
+                    // 🔹 Customers select fill karo
+                    $('.bill-entry').each(function() {
+                        let customerSelect = $(this).find('.customer-select');
+                        customerSelect.html('<option value="">Select customer</option>');
+                        customers.forEach(function(customer) {
+                            customerSelect.append(
+                                `<option value="${customer.id}" data-city="${customer.city}" data-area="${customer.area}">
+                                ${customer.shop_name}
+                            </option>`
+                            );
+                        });
+                    });
+
+                    // 🔹 Salesman select fill karo
+                    let salesmanSelect = $('#salesman_id');
+                    salesmanSelect.html('<option value="">Select salesman</option>');
+                    salesmen.forEach(function(salesman) {
+                        salesmanSelect.append(
+                            `<option value="${salesman.id}">${salesman.name}</option>`
+                        );
+                    });
+                }
+            });
+        } else {
+            $('.customer-select').html('<option value="">Select customer</option>');
+            $('#salesman_id').html('<option value="">Select salesman</option>');
+        }
+    });
+
+
+
+
     let billIndex = 1;
     // Reusable function to bind events per bill-entry
     function bindBillEvents(entry) {
@@ -196,11 +232,11 @@
     });
 
     $(document).on('click', '.remove-bill', function() {
-    // If only one bill-entry remains, don't allow removing
-    if ($('.bill-entry').length > 1) {
-        $(this).closest('.bill-entry').remove();
-    } else {
-        alert("You must keep at least one bill entry.");
-    }
-});
+        // If only one bill-entry remains, don't allow removing
+        if ($('.bill-entry').length > 1) {
+            $(this).closest('.bill-entry').remove();
+        } else {
+            alert("You must keep at least one bill entry.");
+        }
+    });
 </script>

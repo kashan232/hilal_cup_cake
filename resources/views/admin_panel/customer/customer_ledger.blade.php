@@ -19,12 +19,34 @@
                         <strong>Success!</strong> {{ session('success') }}.
                     </div>
                     @endif
+                    <form method="GET" action="{{ route('customer-ledger') }}" class="mb-3">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label">Order Booker</label>
+                                <select name="booker_id" class="form-select">
+                                    <option value="">-- Select Booker --</option>
+                                    @foreach($bookers as $booker)
+                                    <option value="{{ $booker->id }}" {{ request('booker_id') == $booker->id ? 'selected' : '' }}>
+                                        {{ $booker->name }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-2 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">Filter</button>
+                                <a href="{{ route('customer-ledger') }}" class="btn btn-secondary">Reset</a>
+                            </div>
+                        </div>
+                    </form>
+
 
                     <div class="table-responsive">
                         <table class="table datanew">
                             <thead>
                                 <tr>
                                     <th>ID</th>
+                                    <th>Booker</th>
                                     <th>Shop</th>
                                     <th>Name</th>
                                     <th>Area</th>
@@ -38,6 +60,11 @@
                                 @forelse($CustomerLedgers as $ledger)
                                 <tr>
                                     <td>{{ $ledger->customer_id }}</td>
+                                    <td>
+                                        @foreach($ledger->Customer->order_booker_names as $name)
+                                        <span class="badge bg-success">{{ $name }}</span>
+                                        @endforeach
+                                    </td>
                                     <td>{{ $ledger->Customer->shop_name }}</td>
                                     <td>{{ $ledger->Customer->customer_name }}</td>
                                     <td>{{ $ledger->Customer->area }}</td>
@@ -45,7 +72,7 @@
                                     <td>{{ number_format($ledger->opening_balance, 0) }}</td>
                                     <td>{{ number_format($ledger->previous_balance, 0) }}</td>
                                     <td id="closing_balance_{{ $ledger->id }}">{{ number_format($ledger->closing_balance, 0) }}</td>
-                                    
+
                                 </tr>
                                 @empty
                                 <tr>

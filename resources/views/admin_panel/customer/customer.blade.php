@@ -3,6 +3,8 @@
     @include('admin_panel.include.navbar_include')
     @include('admin_panel.include.admin_sidebar_include')
 
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
     <div class="page-wrapper">
         <div class="content">
             <div class="page-header">
@@ -13,7 +15,7 @@
                 @if(Auth::check() && Auth::user()->usertype === 'admin')
                 <div class="page-btn">
                     <button class="btn btn-added" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
-                       Add Customer
+                        Add Customer
                     </button>
                 </div>
                 @endif
@@ -39,6 +41,7 @@
                                 <th>City</th>
                                 <th>Area</th>
                                 <th>Business Type</th>
+                                <th>Order Booker</th> {{-- ✅ New Column --}}
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -53,6 +56,12 @@
                                 <td>{{ $customer->city ?? 'N/A' }}</td>
                                 <td>{{ $customer->area ?? 'N/A' }}</td>
                                 <td>{{ $customer->business_type_name ?? 'N/A' }}</td>
+                                <td>
+                                    @foreach($customer->order_booker_names as $name)
+                                    <span class="badge bg-success">{{ $name }}</span>
+                                    @endforeach
+                                </td>
+
                                 <td>
                                     <button class="btn btn-sm btn-warning editCustomerBtn" data-id="{{ $customer->id }}">Edit</button>
                                     <button class="btn btn-sm btn-danger deleteCustomerBtn" data-id="{{ $customer->id }}">Delete</button>
@@ -85,6 +94,17 @@
                     <input type="text" name="customer_name" class="form-control mt-2" placeholder="ShopKeeper Name" required>
                     <input type="text" name="phone_number" class="form-control mt-2" placeholder="Phone Number" required>
                     <input type="number" name="opening_balance" class="form-control mt-2" placeholder="Opening Balance" required>
+
+                    <div class="mb-3 mt-3">
+                        <label for="order_booker_id" class="form-label fw-bold">Select Order Bookers</label>
+                        <select class="form-control select2" id="order_booker_id" name="order_booker_id[]" style="width: 100%;" multiple required>
+                            @foreach($OrderBookers as $booker)
+                            <option value="{{ $booker->id }}">{{ $booker->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <select class="form-control" name="city" id="citySelect" required>
@@ -173,6 +193,18 @@
                             <label class="form-label">Opening Balance</label>
                             <input type="number" class="form-control" name="opening_balance" id="edit_opening_balance" required>
                         </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Order Booker</label>
+                            <select class="form-control" name="order_booker_id" id="edit_order_booker_id" required>
+                                <option value="">Select Order Booker</option>
+                                @foreach($OrderBookers as $booker)
+                                <option value="{{ $booker->id }}">{{ $booker->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+
                     </div>
 
                     <div class="row mb-3">
@@ -203,6 +235,16 @@
 @include('admin_panel.include.footer_include')
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({
+            placeholder: "Select an option",
+            allowClear: true
+        });
+    });
+</script>
 <script>
     $(document).on("click", ".editCustomerBtn", function() {
         let id = $(this).data("id");
