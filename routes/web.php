@@ -197,6 +197,9 @@ Route::get('/customer-recovery', [CustomerController::class, 'customer_recovery'
 Route::get('/customer/edit/{id}', [CustomerController::class, 'getCustomerData'])->name('customer.edit');
 Route::put('/customer-recovery/{id}', [CustomerController::class, 'updateRecovery'])->name('customer_recovery.update');
 Route::get('/customers/by-booker/{id}', [CustomerController::class, 'getByBooker'])->name('customers.byBooker');
+// routes/web.php
+// Route::post('/customer-recovery/{id}/confirm-payment', [CustomerController::class, 'confirmPayment'])->name('customer_recovery.confirmPayment');
+Route::post('/customer-recovery/bulk-confirm', [CustomerController::class, 'bulkConfirm'])->name('customer_recovery.bulkConfirm');
 
 Route::get('/local-sale', [LocalSaleController::class, 'local_sale'])->name('local-sale');
 Route::post('/store-local-sale', [LocalSaleController::class, 'store_local_sale'])->name('store-local-sale');
@@ -244,6 +247,7 @@ Route::get('/customer-payments', [PaymentController::class, 'customer_payments']
 Route::post('/customer-payment/store', [PaymentController::class, 'storeCustomerPayment'])->name('customer.payment.store');
 Route::get('/get-customer-balance/{id}', [PaymentController::class, 'getCustomerBalance'])->name('get.customer.balance');
 Route::get('/get-customer-bills/{id}', [PaymentController::class, 'getCustomerBills'])->name('get.customer.bills');
+Route::get('/get-customers-by-booker/{id}', [PaymentController::class, 'getCustomersByBooker'])->name('get.customers.by.booker');
 
 
 Route::get('/Distributor-payments', [PaymentController::class, 'Distributor_payments'])->name('Distributor-payments');

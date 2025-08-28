@@ -250,14 +250,6 @@ class CreateBillController extends Controller
     {
         $bill = CreateBill::findOrFail($request->bill_id);
 
-        // ✅ Only allow unassign if payment is unpaid
-        if (strtolower($bill->payment_status) !== 'unpaid') {
-            return response()->json([
-                'success' => false,
-                'message' => 'This bill is already paid and cannot be unassigned.'
-            ], 400);
-        }
-
         // ✅ Update fields
         $bill->status = 'unassigned';
         $bill->assign_type = null;

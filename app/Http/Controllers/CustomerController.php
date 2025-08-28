@@ -19,7 +19,7 @@ class CustomerController extends Controller
     {
         if (Auth::id()) {
             $userId = Auth::id();
-            $customers = Customer::where('admin_or_user_id', $userId)->get();
+            $customers = Customer::all();
             $cities = City::all(); // Updated the variable name to avoid confusion
             $OrderBookers = Salesman::where('designation', 'orderbooker')
                 ->get();
@@ -142,6 +142,15 @@ class CustomerController extends Controller
         // Booker filter
         if ($request->filled('booker_id')) {
             $query->where('salesman', $request->booker_id);
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            if ($request->status == 'paid') {
+                $query->where('status', 'paid');
+            } elseif ($request->status == 'unpaid') {
+                $query->whereNull('status'); // unpaid = null
+            }
         }
 
         // Usertype filter (admin / booker)
@@ -341,5 +350,27 @@ class CustomerController extends Controller
             'customers' => $customers,
             'salesmen'  => $salesmen,
         ]);
+    }
+
+    // public function confirmPayment($id)
+    // {
+    //     $recovery = CustomerRecovery::findOrFail($id);
+    //     $recovery->status = 'paid';
+    //     $recovery->save();
+
+    //     return response()->json(['success' => true, 'message' => 'Payment marked as Paid successfully.']);
+    // }
+
+    public function bulkConfirm(Request $request)
+    {
+        $ids = $request->ids ?? [];
+
+        if (empty($ids)) {
+            return response()->json(['success' => false, 'message' => 'No recoveries selected.']);
+        }
+
+        CustomerRecovery::whereIn('id', $ids)->update(['status' => 'paid']);
+
+        return response()->json(['success' => true, 'message' => 'Selected recoveries marked as Paid successfully.']);
     }
 }

@@ -15,76 +15,11 @@
                 </li>
 
 
-                <!-- <li class="submenu">
-                    <a href="javascript:void(0);"><i class="fas fa-users"></i><span> Distributor</span> <span class="menu-arrow"></span></a>
-                    <ul>
-                        <li><a href="{{ route('Distributor') }}">Distributor</a></li>
-                        <li><a href="{{ route('Distributor-ledger') }}">Distributor Ledger </a></li>
-                        <li><a href="{{ route('Distributor-recovery') }}">Distributor Recoveries </a></li>
-                    </ul>
-                </li> -->
-
-                <!-- <li class="submenu">
-                    <a href="javascript:void(0);"><i class="fas fa-user-friends"></i><span> Vendors</span> <span class="menu-arrow"></span></a>
-                    <ul>
-                        <li><a href="{{ route('vendors') }}">Vendors</a></li>
-                        <li><a href="{{ route('vendors-ledger') }}">Vendors Ledger </a></li>
-                        <li><a href="{{ route('amount-paid-vendors') }}">Vendors Payments </a></li>
-                        <li><a href="{{ route('vendors-builty') }}">Vendors Builty </a></li>
-                    </ul>
-                </li> -->
-
-                <!-- <li>
-                    <a href="{{ route('category') }}"><i class="fas fa-box"></i><span> Category</span> </a>
-                </li> -->
-
-                <!-- <li>
-                    <a href="{{ route('sub-category') }}"><i class="fas fa-boxes"></i><span> Sub-Category</span> </a>
-                </li> -->
-
-                <!-- <li>
-                    <a href="{{ route('size') }}"><i class="fas fa-wine-bottle"></i> <span> Size </span> </a>
-                </li> -->
-
                 <li>
                     <a href="{{ route('business_type') }}"><i class="fas fa-business-time"></i> <span> Business Type </span> </a>
                 </li>
 
-                <!-- <li>
-                    <a href="{{ route('product') }}"><i class="fas fa-box-open"></i> <span> Product </span> </a>
-                </li> -->
 
-                <!-- <li class="submenu">
-                    <a href="javascript:void(0);"><i class="fas fa-shopping-basket"></i><span> Purchase</span> <span class="menu-arrow"></span></a>
-                    <ul>
-                        <li><a href="{{ route('Purchase') }}">Add Purchase</a></li>
-                        <li><a href="{{ route('all-Purchases') }}">All Purchase</a></li>
-                        <li><a href="{{ route('all-purchase-return') }}"> Purchase Returns</a></li>
-                    </ul>
-                </li> -->
-
-                <!-- <li class="submenu">
-                    <a href="javascript:void(0);"><i class="fas fa-store"></i><span> Distributor Sale</span> <span class="menu-arrow"></span></a>
-                    <ul>
-                        <li><a href="{{ route('add-sale') }}">Add Sale</a></li>
-                        <li><a href="{{ route('all-sale') }}">Sales</a></li>
-                    </ul>
-                </li> -->
-
-                <!-- <li class="submenu">
-                    <a href="javascript:void(0);"><i class="fas fa-shopping-bag"></i><span> Local Sale</span> <span class="menu-arrow"></span></a>
-                    <ul>
-                        <li><a href="{{ route('local-sale') }}">Add Sale</a></li>
-                        <li><a href="{{ route('all-local-sale') }}">Sales</a></li>
-                    </ul>
-                </li> -->
-                <!-- <li class="submenu">
-                    <a href="javascript:void(0);"><i class="fas fa-shopping-bag"></i><span> Sale Return</span> <span class="menu-arrow"></span></a>
-                    <ul>
-                        <li><a href="{{ route('add-sale-return') }}">Add Sale Return</a></li>
-                        <li><a href="{{ route('all-sale-return') }}">Sales Return</a></li>
-                    </ul>
-                </li> -->
                 <li class="submenu">
                     <a href="javascript:void(0);"><i class="fas fa-user-tie"></i><span> Staff Management</span> <span class="menu-arrow"></span></a>
                     <ul>
@@ -92,13 +27,7 @@
 
                     </ul>
                 </li>
-                <!-- <li class="submenu">
-                    <a href="javascript:void(0);"><i class="fas fa-money-bill-wave"></i><span> Expenses</span> <span class="menu-arrow"></span></a>
-                    <ul>
-                        <li><a href="{{ route('expense') }}">Add Expense Categroy</a></li>
-                        <li><a href="{{ route('add-expenses') }}">Add Expenss</a></li>
-                    </ul>
-                </li> -->
+
                 <li class="submenu">
                     <a href="javascript:void(0);"><i class="fas fa-address-book"></i><span>Customer Management</span> <span class="menu-arrow"></span></a>
                     <ul>
@@ -181,7 +110,7 @@
                             @endif
                         </a>
                         <ul>
-                           
+
                             <li><a href="{{ route('bills') }}"> Bills </a></li>
                         </ul>
                     </li>
@@ -266,15 +195,21 @@
                         </li>
 
                         <li class="submenu">
-                            <a href="javascript:void(0);">
-                                <i class="fas fa-address-book"></i>
-                                <span> Bills</span>
-                            </a>
+                            <a href="javascript:void(0);"><i class="fas fa-address-book"></i><span>Customer Management</span> <span class="menu-arrow"></span></a>
+                            <ul>
+                                <li><a href="{{ route('customer') }}">Create Cutomers </a></li>
+                            </ul>
+                        </li>
+
+                        <li class="submenu">
+                            <a href="javascript:void(0);"><i class="fas fa-address-book"></i><span>Create Bills</span> <span class="menu-arrow"></span></a>
                             <ul>
                                 <li><a href="{{ route('create-bill') }}">Create Bill </a></li>
                                 <li><a href="{{ route('bills') }}"> Bills </a></li>
                             </ul>
                         </li>
+
+
 
                     </ul>
                     @endif

@@ -239,6 +239,14 @@ class PaymentController extends Controller
         return response()->json($bills);
     }
 
+    public function getCustomersByBooker($id)
+    {
+        $customers = Customer::whereJsonContains('order_booker_id', (string)$id)->get();
+
+        return response()->json($customers);
+    }
+
+
 
     public function Distributor_payments()
     {

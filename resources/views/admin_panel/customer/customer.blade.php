@@ -12,7 +12,7 @@
                     <h4>Customer List</h4>
                     <h6>Manage Customers</h6>
                 </div>
-                @if(Auth::check() && Auth::user()->usertype === 'admin')
+                @if(Auth::check() && (Auth::user()->usertype === 'admin' || Auth::user()->usertype === 'accountant'))
                 <div class="page-btn">
                     <button class="btn btn-added" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
                         Add Customer

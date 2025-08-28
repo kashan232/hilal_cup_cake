@@ -21,7 +21,7 @@
                     @endif
                     <form method="GET" action="{{ route('customer-recovery') }}" class="mb-3">
                         <div class="row g-2 align-items-end">
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label class="form-label">Order Booker</label>
                                 <select name="booker_id" class="form-select">
                                     <option value="">-- Select Booker --</option>
@@ -33,15 +33,22 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label class="form-label">Usertype</label>
                                 <select name="usertype" class="form-select">
                                     <option value="">-- Select Usertype --</option>
                                     <option value="admin" {{ request('usertype') == 'admin' ? 'selected' : '' }}>Admin</option>
-                                    <option value="booker" {{ request('usertype') == 'booker' ? 'selected' : '' }}>Booker</option>
+                                    <option value="orderbooker" {{ request('usertype') == 'orderbooker' ? 'selected' : '' }}>orderbooker</option>
                                 </select>
                             </div>
-
+                            <div class="col-md-2">
+                                <label class="form-label">Status</label>
+                                <select name="status" class="form-select">
+                                    <option value="">-- Select Status --</option>
+                                    <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Paid</option>
+                                    <option value="unpaid" {{ request('status') == 'unpaid' ? 'selected' : '' }}>Unpaid</option>
+                                </select>
+                            </div>
                             <div class="col-md-2">
                                 <label class="form-label">From Date</label>
                                 <input type="date" name="from_date" class="form-control" value="{{ request('from_date') }}">
@@ -55,10 +62,16 @@
                             <div class="col-md-2 d-flex gap-2">
                                 <button type="submit" class="btn btn-primary">Filter</button>
                                 <a href="{{ route('customer-recovery') }}" class="btn btn-secondary">Reset</a>
+
                             </div>
                         </div>
-                    </form>
 
+                    </form>
+                    @if(auth()->user()->usertype == 'admin')
+                    <button type="button" class="btn btn-success mt-2 mb-3" id="bulkConfirmBtn">
+                        Confirm Selected Payments
+                    </button>
+                    @endif
 
 
 
@@ -71,6 +84,9 @@
                         <table class="table datanew">
                             <thead>
                                 <tr>
+                                    <th>
+                                        <input type="checkbox" id="selectAll">
+                                    </th>
                                     <th>#</th>
                                     <th>Date</th>
                                     <th>Usertype</th>
@@ -78,13 +94,19 @@
                                     <th>OrderBooker</th>
                                     <th>Amount Paid</th>
                                     <th>Remarks</th>
-                                    <th>Difference Details</th>
+                                    <th>Difference</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($Recoveries as $key => $recovery)
                                 <tr id="recovery-row-{{ $recovery->id }}">
+                                    <td>
+                                        @if(auth()->user()->usertype == 'admin' && $recovery->usertype == 'orderbooker' && $recovery->status != 'paid')
+                                        <input type="checkbox" class="selectRecovery" value="{{ $recovery->id }}">
+                                        @endif
+                                    </td>
                                     <td>{{ $key + 1 }}</td>
                                     <td>{{ $recovery->date }}</td>
                                     <td>{{ $recovery->usertype }}</td>
@@ -111,7 +133,15 @@
                                         <span class="text-muted">N/A</span>
                                         @endif
                                     </td>
-
+                                    <td>
+                                        @if(empty($recovery->status))
+                                        <span class="badge bg-danger">Unpaid</span>
+                                        @elseif($recovery->status == 'paid')
+                                        <span class="badge bg-success">Paid</span>
+                                        @else
+                                        <span class="badge bg-secondary">{{ ucfirst($recovery->status) }}</span>
+                                        @endif
+                                    </td>
                                     <td>
                                         <button type="button" class="btn btn-sm btn-primary text-white" data-bs-toggle="modal" data-bs-target="#editRecoveryModal{{ $recovery->id }}">
                                             Edit
@@ -194,3 +224,65 @@
 </div>
 
 @include('admin_panel.include.footer_include')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+        // Select All functionality
+        document.getElementById("selectAll").addEventListener("change", function() {
+            document.querySelectorAll(".selectRecovery").forEach(cb => cb.checked = this.checked);
+        });
+
+        // Bulk Confirm
+        document.getElementById("bulkConfirmBtn").addEventListener("click", function() {
+            let selected = [];
+            document.querySelectorAll(".selectRecovery:checked").forEach(cb => {
+                selected.push(cb.value);
+            });
+
+            if (selected.length === 0) {
+                Swal.fire("Warning!", "Please select at least one recovery.", "warning");
+                return;
+            }
+
+            Swal.fire({
+                title: "Are you sure?",
+                text: "You want to mark selected recoveries as Paid?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#28a745",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, confirm!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch("{{ route('customer_recovery.bulkConfirm') }}", {
+                            method: "POST",
+                            headers: {
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                ids: selected
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire("Confirmed!", data.message, "success");
+
+                                // Update rows to show Paid
+                                selected.forEach(id => {
+                                    let row = document.querySelector(`#recovery-row-${id}`);
+                                    if (row) {
+                                        row.classList.add("table-success");
+                                        row.querySelector("td:nth-child(9)").innerHTML = '<span class="badge bg-success">Paid</span>';
+                                    }
+                                });
+                            }
+                        });
+                }
+            });
+        });
+
+    });
+</script>

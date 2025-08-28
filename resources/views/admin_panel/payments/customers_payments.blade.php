@@ -40,26 +40,23 @@
 
                         <div class="row mb-3">
                             <div class="col-md-4">
-                                <label>Customer</label>
-                                <select name="customer_id" id="customer" class="form-control" required>
-                                    <option value="">Select Customer</option>
-                                    @foreach($customers as $customer)
-                                    <option value="{{ $customer->id }}">
-                                        {{ $customer->customer_name }} - {{ $customer->shop_name }} ({{ $customer->area }})
-                                    </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label>Booker</label>
-                                <select name="ordbker_id" class="form-control" required>
+                                <label>Order Booker</label>
+                                <select name="ordbker_id" id="order_booker" class="form-control" required>
                                     <option value="">Select Order Booker</option>
                                     @foreach($orderbooker as $ordbker)
                                     <option value="{{ $ordbker->id }}">{{ $ordbker->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
+
+                            <div class="col-md-4">
+                                <label>Customer</label>
+                                <select name="customer_id" id="customer" class="form-control" required>
+                                    <option value="">Select Customer</option>
+                                </select>
+                            </div>
+
+
 
                             <div class="col-md-4">
                                 <label>Payment Date</label>
@@ -117,7 +114,38 @@
     </div>
 </div>
 @include('admin_panel.include.footer_include')
+
+
 <script>
+    const customerByBookerRoute = "{{ route('get.customers.by.booker', ['id' => '__id__']) }}";
+
+    $(document).ready(function() {
+        // Booker change -> customers load
+        $('#order_booker').change(function() {
+            const bookerId = $(this).val();
+            if (bookerId) {
+                let route = customerByBookerRoute.replace('__id__', bookerId);
+
+                $.get(route, function(customers) {
+                    let options = '<option value="">Select Customer</option>';
+                    customers.forEach(customer => {
+                        options += `<option value="${customer.id}">
+                            ${customer.customer_name} - ${customer.shop_name} (${customer.area})
+                        </option>`;
+                    });
+                    $('#customer').html(options);
+
+                    // Reset old data
+                    $('#closing_balance_box').hide();
+                    $('#bill_recovery_table tbody').html('<tr><td colspan="10" class="text-center">Select a customer to view unpaid bills.</td></tr>');
+                });
+            } else {
+                $('#customer').html('<option value="">Select Customer</option>');
+            }
+        });
+    });
+
+
     const balanceRoute = "{{ route('get.customer.balance', ['id' => '__id__']) }}";
     const billRoute = "{{ route('get.customer.bills', ['id' => '__id__']) }}";
 
